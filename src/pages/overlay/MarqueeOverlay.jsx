@@ -34,18 +34,28 @@ export default function MarqueeOverlay() {
       setUsername(MOCK_PROFILE.username)
       return
     }
-    const [profileRes, donationsRes] = await Promise.all([
-      supabase.from('profiles').select('username').eq('id', streamerId).single(),
-      supabase.from('donations')
-        .select('id,sender_name,amount,message,created_at')
-        .eq('streamer_id', streamerId)
-        .eq('status', 'success')
-        .eq('is_test', false)
-        .order('created_at', { ascending: false })
-        .limit(10),
-    ])
-    if (profileRes.data) setUsername(profileRes.data.username)
-    if (donationsRes.data?.length) setDonations(donationsRes.data)
+    try {
+      const [profileRes, donationsRes] = await Promise.all([
+        supabase.from('profiles').select('username').eq('id', streamerId).single(),
+        supabase.from('donations')
+          .select('id,sender_name,amount,message,created_at')
+          .eq('streamer_id', streamerId)
+          .eq('status', 'success')
+          .eq('is_test', false)
+          .order('created_at', { ascending: false })
+          .limit(10),
+      ])
+      if (profileRes.error) throw profileRes.error
+      if (donationsRes.error) throw donationsRes.error
+
+      if (profileRes.data) setUsername(profileRes.data.username)
+      if (donationsRes.data) setDonations(donationsRes.data)
+    } catch (err) {
+      console.error('Error fetching marquee data:', err)
+      // Fallback
+      setDonations(MOCK_DONATIONS.filter((d) => d.status === 'success' && !d.is_test).slice(0, 10))
+      setUsername(MOCK_PROFILE.username)
+    }
   }, [streamerId])
 
   useEffect(() => {

@@ -31,6 +31,10 @@ export default function QROverlay() {
     }
     supabase.from('profiles').select('id,username,display_name').eq('id', streamerId).single()
       .then(({ data }) => setProfile(data ?? MOCK_PROFILE))
+      .catch((err) => {
+        console.error('Error fetching profile for QR overlay:', err);
+        setProfile(MOCK_PROFILE);
+      })
   }, [streamerId])
 
   if (!profile) return null

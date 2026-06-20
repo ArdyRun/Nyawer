@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Zap, Heart, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { supabase, isSupabaseReady } from '../lib/supabase'
@@ -71,15 +71,54 @@ function SuccessScreen({ streamer, amount, onReset }) {
 export default function PayPage() {
   const { username } = useParams()
 
-  // In production: fetch profile by username from Supabase
-  // For demo: use MOCK_PROFILE if username matches, else substitute username
-  const streamer = { ...MOCK_PROFILE, username: username ?? MOCK_PROFILE.username,
-                     display_name: username ? `@${username}` : MOCK_PROFILE.display_name }
-
+  const [streamer, setStreamer] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState(false)
   const [form, setForm]     = useState({ sender_name: '', amount: '', message: '' })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
+
+  useEffect(() => {
+    if (!username) {
+      setProfileError(true)
+      setProfileLoading(false)
+      return
+    }
+
+    if (isSupabaseReady && supabase) {
+      setProfileLoading(true)
+      setProfileError(false)
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', username.toLowerCase())
+        .single()
+        .then(({ data, error }) => {
+          if (error || !data) {
+            console.error('Error fetching profile:', error)
+            setProfileError(true)
+          } else {
+            setStreamer(data)
+          }
+          setProfileLoading(false)
+        })
+        .catch((err) => {
+          console.error(err)
+          setProfileError(true)
+          setProfileLoading(false)
+        })
+    } else {
+      // Demo mode fallback
+      const demoProfile = {
+        ...MOCK_PROFILE,
+        username: username,
+        display_name: `@${username}`
+      }
+      setStreamer(demoProfile)
+      setProfileLoading(false)
+    }
+  }, [username])
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
   const fee = form.amount ? Math.round(Number(form.amount) * 0.04) : 0
@@ -89,21 +128,22 @@ export default function PayPage() {
     e.preventDefault()
     const amount = Number(form.amount)
 
-    if (amount < (streamer.min_donation ?? 10000)) {
-      addToast({ message: `Minimum donasi ${formatRp(streamer.min_donation)}`, type: 'error' })
+    if (amount < (streamer?.min_donation ?? 10000)) {
+      addToast({ message: `Minimum donasi ${formatRp(streamer?.min_donation ?? 10000)}`, type: 'error' })
       return
     }
 
     setLoading(true)
     try {
       if (isSupabaseReady && supabase) {
-        // Real Supabase insert
+        // Real Supabase insert: langsung status 'success' agar terpicu di OBS & dashboard
         const { error } = await supabase.from('donations').insert({
           streamer_id:  streamer.id,
           sender_name:  form.sender_name.trim() || 'Anonim',
           amount,
           message:      form.message.trim(),
-          status:       'pending',
+          status:       'success',
+          is_test:      false,
         })
         if (error) throw error
       } else {
@@ -139,7 +179,25 @@ export default function PayPage() {
           <ArrowLeft size={15} /> Kembali
         </Link>
 
-        {success ? (
+        {profileLoading ? (
+          <div className="glass-card p-8 rounded-3xl text-center flex flex-col items-center gap-4">
+            <div className="w-10 h-10 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin" />
+            <p className="text-white/40 text-xs">Memuat profil streamer...</p>
+          </div>
+        ) : profileError || !streamer ? (
+          <div className="glass-card p-8 rounded-3xl text-center flex flex-col items-center gap-5">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center bg-red-500/10 border border-red-500/20 text-red-400">
+              <AlertCircle size={28} />
+            </div>
+            <div>
+              <h2 className="font-display font-bold text-lg text-white mb-1">Streamer Tidak Ditemukan</h2>
+              <p className="text-white/40 text-xs">Username <strong className="text-purple-300">@{username}</strong> tidak terdaftar di sistem kami.</p>
+            </div>
+            <Link to="/" className="btn-neon px-6 py-2.5 rounded-xl text-xs font-bold w-full text-center">
+              <span className="relative z-10 flex justify-center w-full">Kembali ke Beranda</span>
+            </Link>
+          </div>
+        ) : success ? (
           <div className="glass-card p-8 rounded-3xl">
             <SuccessScreen streamer={streamer} amount={Number(form.amount)} onReset={() => { setSuccess(false); setForm({ sender_name: '', amount: '', message: '' }) }} />
           </div>

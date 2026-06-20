@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Zap, BarChart3, Settings, Copy, ExternalLink, RefreshCw,
@@ -19,7 +19,7 @@ const LABEL = 'block text-[11px] font-bold text-white/40 uppercase tracking-wide
 /* ════════════════════════════════════════════════════════════
    STATS TAB
 ════════════════════════════════════════════════════════════ */
-function StatsTab({ profile, donations }) {
+function StatsTab({ profile, donations, onRefresh }) {
   const { toasts, addToast, removeToast } = useToast()
 
   const successOnly   = donations.filter((d) => d.status === 'success' && !d.is_test)
@@ -85,7 +85,7 @@ function StatsTab({ profile, donations }) {
       <div className="glass-card overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.04]">
           <h3 className="font-display font-bold text-base text-white">5 Donasi Terakhir</h3>
-          <button className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white transition-colors">
+          <button onClick={onRefresh} className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white transition-colors">
             <RefreshCw size={12} /> Refresh
           </button>
         </div>
@@ -125,7 +125,7 @@ function StatsTab({ profile, donations }) {
 /* ════════════════════════════════════════════════════════════
    SETTINGS TAB
 ════════════════════════════════════════════════════════════ */
-function SettingsTab({ profile, onProfileUpdate }) {
+function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
   const [form, setForm] = useState({
     display_name: profile.display_name,
     username:     profile.username,
@@ -141,10 +141,17 @@ function SettingsTab({ profile, onProfileUpdate }) {
     setSaving(true)
     try {
       if (isSupabaseReady && supabase) {
-        const { error } = await supabase.from('profiles')
-          .update({ display_name: form.display_name, username: form.username, bio: form.bio, min_donation: form.min_donation })
-          .eq('id', profile.id)
+        const { data, error } = await supabase.rpc('update_profile_secure', {
+          p_session_token: sessionToken,
+          p_display_name: form.display_name,
+          p_username: form.username,
+          p_bio: form.bio,
+          p_min_donation: Number(form.min_donation)
+        })
         if (error) throw error
+        if (data && !data.success) {
+          throw new Error(data.message)
+        }
       } else {
         await new Promise((r) => setTimeout(r, 1100))
       }
@@ -226,7 +233,7 @@ function SettingsTab({ profile, onProfileUpdate }) {
 /* ════════════════════════════════════════════════════════════
    OVERLAY TAB
 ════════════════════════════════════════════════════════════ */
-function OverlayTab({ profile, user }) {
+function OverlayTab({ profile, user, sessionToken }) {
   const { toasts, addToast, removeToast } = useToast()
   const [testing, setTesting] = useState(false)
   const [testSent, setTestSent] = useState(false)
@@ -276,15 +283,15 @@ function OverlayTab({ profile, user }) {
 
     try {
       if (isSupabaseReady && supabase) {
-        const { error } = await supabase.from('donations').insert({
-          streamer_id: user?.id ?? profile.id,
-          sender_name:  testDonation.sender_name,
-          amount:       testDonation.amount,
-          message:      testDonation.message,
-          is_test:      true,
-          status:       'success',
+        const { data, error } = await supabase.rpc('insert_test_donation', {
+          p_session_token: sessionToken,
+          p_amount: testDonation.amount,
+          p_message: testDonation.message
         })
         if (error) throw error
+        if (data && !data.success) {
+          throw new Error(data.message)
+        }
       } else {
         // Demo mode: kirim via localStorage storage event
         await new Promise((r) => setTimeout(r, 600))
@@ -406,14 +413,93 @@ const TABS = [
 
 export default function Dashboard() {
   const [tab, setTab]         = useState('stats')
-  const [profile, setProfile] = useState(MOCK_PROFILE)
-  const donations               = MOCK_DONATIONS
-  const { user, signOut }      = useAuth()
+  const [donations, setDonations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { user, profile, setProfile, sessionToken, signOut } = useAuth()
   const navigate               = useNavigate()
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!user || !sessionToken) return
+
+    try {
+      if (isSupabaseReady && supabase) {
+        // Fetch profile lewat RPC
+        const { data: profileRes, error: profileError } = await supabase
+          .rpc('get_current_user_profile', { p_session_token: sessionToken })
+
+        if (profileError) throw profileError
+        if (profileRes?.success) {
+          setProfile(profileRes.profile)
+        } else {
+          throw new Error(profileRes?.message || 'Gagal memuat profil.')
+        }
+
+        // Fetch donations lewat RPC
+        const { data: donationsRes, error: donationsError } = await supabase
+          .rpc('get_my_donations', { p_session_token: sessionToken })
+
+        if (donationsError) throw donationsError
+        if (donationsRes?.success) {
+          setDonations(donationsRes.donations || [])
+        } else {
+          throw new Error(donationsRes?.message || 'Gagal memuat donasi.')
+        }
+      } else {
+        // Demo/offline mode
+        setProfile(MOCK_PROFILE)
+        setDonations(MOCK_DONATIONS)
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [user, sessionToken, setProfile])
+
+  useEffect(() => {
+    if (!user) return
+
+    fetchDashboardData()
+
+    if (isSupabaseReady && supabase) {
+      // Subscribe to realtime donations changes
+      const channel = supabase
+        .channel(`dashboard-realtime-${user.id}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'donations',
+          filter: `streamer_id=eq.${user.id}`,
+        }, (payload) => {
+          console.log('Realtime update received:', payload)
+          // Re-fetch to get up-to-date data (and calculated generated columns)
+          fetchDashboardData()
+        })
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [user, fetchDashboardData])
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/login', { replace: true })
+  }
+
+  if (loading || !profile) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center animate-pulse"
+          style={{ background: 'linear-gradient(135deg, #7c3aed, #22d3ee)' }}
+        >
+          <Zap size={22} className="text-white fill-white" />
+        </div>
+        <p className="text-white/30 text-sm font-medium tracking-widest uppercase">Memuat Dashboard...</p>
+      </div>
+    )
   }
 
   return (
@@ -495,9 +581,9 @@ export default function Dashboard() {
         <div className="fixed top-0 right-0 w-[500px] h-[500px] pointer-events-none"
           style={{ background: 'radial-gradient(circle at top right, rgba(124,58,237,0.06) 0%, transparent 70%)' }} />
 
-        {tab === 'stats'    && <StatsTab profile={profile} donations={donations} />}
-        {tab === 'settings' && <SettingsTab profile={profile} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} />}
-        {tab === 'overlay'  && <OverlayTab profile={profile} user={user} />}
+        {tab === 'stats'    && <StatsTab profile={profile} donations={donations} onRefresh={fetchDashboardData} />}
+        {tab === 'settings' && <SettingsTab profile={profile} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} sessionToken={sessionToken} />}
+        {tab === 'overlay'  && <OverlayTab profile={profile} user={user} sessionToken={sessionToken} />}
       </main>
     </div>
   )

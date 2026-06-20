@@ -40,7 +40,7 @@ export default function RegisterPage() {
       const { data, error: authError } = await signUp(form.email, form.password, form.displayName)
       if (authError) throw authError
 
-      if (isSupabaseReady && !data?.session) {
+      if (isSupabaseReady && !data?.user) {
         // Email konfirmasi dikirim — belum otomatis login
         setSuccess(true)
       } else {
