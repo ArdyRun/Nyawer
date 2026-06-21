@@ -4,38 +4,23 @@ import { ArrowLeft, Zap, Heart, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { supabase, isSupabaseReady } from '../lib/supabase'
 import { useToast } from '../hooks/useToast'
 import Toast from '../components/ui/Toast'
+import Avatar from '../components/ui/Avatar'
 import { MOCK_PROFILE } from '../lib/mockData'
 import { formatRp } from '../lib/utils'
 
 /* ── Nominal presets ────────────────────────────────────────── */
 const PRESETS = [10000, 25000, 50000, 100000]
 
-/* ── Avatar placeholder (Refined style, no glowing shadow) ──── */
-function Avatar({ name, size = 64 }) {
-  const initial = (name ?? '?')[0].toUpperCase()
-  return (
-    <div
-      className="rounded-xl flex items-center justify-center font-display font-black text-white flex-shrink-0 bg-violet-600"
-      style={{
-        width: size, height: size,
-        fontSize: size * 0.35,
-      }}
-    >
-      {initial}
-    </div>
-  )
-}
-
 /* ── Success screen ─────────────────────────────────────────── */
 function SuccessScreen({ streamer, amount, onReset }) {
   return (
-    <div className="text-center py-10 flex flex-col items-center gap-6 animate-slide-up">
-      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-zinc-900 border border-zinc-800 text-violet-400">
-        <CheckCircle2 size={32} />
+    <div className="text-center py-8 flex flex-col items-center gap-5 animate-slide-up">
+      <div className="flex justify-center mb-1">
+        <img src="/mascot-success.png" alt="Sukses Mascot" className="w-28 h-28 object-contain" />
       </div>
 
       <div>
-        <h2 className="font-display font-bold text-xl text-zinc-100 mb-1.5">Nyawer Terkirim!</h2>
+        <h2 className="font-display font-bold text-lg text-zinc-100 mb-1.5">Nyawer Terkirim!</h2>
         <p className="text-zinc-400 text-xs leading-relaxed max-w-sm">
           Kamu mengirim <strong className="text-zinc-200">{formatRp(amount)}</strong> ke{' '}
           <strong className="text-zinc-200">{streamer.display_name}</strong>. Menunggu konfirmasi pembayaran.
@@ -173,9 +158,7 @@ export default function PayPage() {
           </div>
         ) : profileError || !streamer ? (
           <div className="glass-card p-6 md:p-8 rounded-xl text-center flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-red-950/20 border border-red-800/30 text-red-400">
-              <AlertCircle size={24} />
-            </div>
+            <img src="/mascot-error.png" alt="Error Mascot" className="w-24 h-24 object-contain mb-1" />
             <div>
               <h2 className="font-display font-bold text-base text-zinc-100 mb-1">Streamer Tidak Ditemukan</h2>
               <p className="text-zinc-500 text-xs">Username <strong className="text-zinc-300 font-semibold">@{username}</strong> tidak terdaftar di sistem kami.</p>
@@ -192,7 +175,7 @@ export default function PayPage() {
           <>
             {/* Streamer profile card */}
             <div className="glass-card p-5 rounded-xl mb-4 flex items-center gap-4">
-              <Avatar name={streamer.display_name} size={56} />
+              <Avatar src={streamer.avatar_url} name={streamer.display_name} size={56} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <h1 className="font-display font-bold text-base text-zinc-100 truncate">{streamer.display_name}</h1>

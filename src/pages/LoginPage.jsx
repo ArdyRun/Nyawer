@@ -72,18 +72,21 @@ export default function LoginPage() {
       <div className="absolute inset-0 pointer-events-none opacity-20 bg-grid" />
 
       <div className="relative z-10 w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <img src="/logo.png" alt="Nyawer" className="w-10 h-10 rounded-xl object-cover" />
-          <span className="font-display font-bold text-xl tracking-wider text-zinc-50">
-            NYAWER
-          </span>
-        </div>
-
         {/* Card */}
         <div className="glass-card p-6 md:p-8">
-          <h1 className="font-display font-bold text-xl text-zinc-100 mb-1">Selamat datang kembali</h1>
-          <p className="text-zinc-500 text-xs mb-6">Masuk untuk kelola donasi streaming Anda.</p>
+          {/* Logo & Mascot Group */}
+          <div className="flex flex-col items-center mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <img src="/logo.png" alt="Nyawer" className="w-7 h-7 rounded-lg object-cover" />
+              <span className="font-display font-bold text-lg tracking-wider text-zinc-50">
+                NYAWER
+              </span>
+            </div>
+            <img src="/mascot-id.png" alt="Nyawer Mascot" className="w-24 h-24 object-contain" />
+          </div>
+
+          <h1 className="font-display font-bold text-lg text-zinc-100 mb-1 text-center">Selamat datang kembali</h1>
+          <p className="text-zinc-500 text-xs mb-6 text-center">Masuk untuk kelola donasi streaming Anda.</p>
 
           {/* Error banner */}
           {error && (

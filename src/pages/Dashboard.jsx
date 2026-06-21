@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Zap, BarChart3, Settings, Copy, ExternalLink, RefreshCw,
   TrendingUp, Users, DollarSign, Monitor, LogOut, Play, CheckCircle2,
-  Bell, FileText, Smartphone, HelpCircle
+  Bell, FileText, Smartphone, HelpCircle, AlertTriangle, Check, X, Loader2
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
 import Toast from '../components/ui/Toast'
+import Avatar from '../components/ui/Avatar'
 import StatusBadge from '../components/ui/StatusBadge'
 import { supabase, isSupabaseReady } from '../lib/supabase'
 import { MOCK_PROFILE, MOCK_DONATIONS } from '../lib/mockData'
@@ -127,13 +128,69 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
     username:     profile.username,
     bio:          profile.bio ?? '',
     min_donation: profile.min_donation,
+    avatar_url:   profile.avatar_url ?? '',
   })
   const [saving, setSaving] = useState(false)
+  const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken'
+  const debounceRef = useRef(null)
   const { toasts, addToast, removeToast } = useToast()
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
+  // ── Username availability check (debounced) ─────────────
+  const checkUsername = useCallback((value) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const clean = value.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    if (clean.length < 3 || clean === profile.username) {
+      setUsernameStatus(null)
+      return
+    }
+    setUsernameStatus('checking')
+    debounceRef.current = setTimeout(async () => {
+      if (!isSupabaseReady || !supabase) {
+        // Demo mode: simulate check
+        setUsernameStatus(clean === profile.username ? null : 'available')
+        return
+      }
+      try {
+        const { data } = await supabase.rpc('check_username_available', { p_username: clean })
+        if (data?.success) {
+          setUsernameStatus(data.available ? 'available' : 'taken')
+        }
+      } catch {
+        setUsernameStatus(null)
+      }
+    }, 400)
+  }, [profile.username])
+
+  const handleUsernameChange = (e) => {
+    const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')
+    set('username', val)
+    checkUsername(val)
+  }
+
+  // ── Profile save ────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Client-side validation
+    const dn = form.display_name.trim()
+    const un = form.username.trim()
+    if (!dn || dn.length > 50) {
+      addToast({ message: 'Nama tampil harus 1-50 karakter.', type: 'error' }); return
+    }
+    if (!un || un.length < 3 || un.length > 30 || !/^[a-z][a-z0-9_]*$/.test(un)) {
+      addToast({ message: 'Username harus 3-30 karakter, huruf kecil, angka, atau underscore.', type: 'error' }); return
+    }
+    if (form.bio.length > 280) {
+      addToast({ message: 'Bio maksimal 280 karakter.', type: 'error' }); return
+    }
+    if (Number(form.min_donation) < 1000) {
+      addToast({ message: 'Minimum donasi Rp 1.000.', type: 'error' }); return
+    }
+    if (usernameStatus === 'taken') {
+      addToast({ message: 'Username sudah digunakan.', type: 'error' }); return
+    }
+
     setSaving(true)
     try {
       if (isSupabaseReady && supabase) {
@@ -142,7 +199,8 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
           p_display_name: form.display_name,
           p_username: form.username,
           p_bio: form.bio,
-          p_min_donation: Number(form.min_donation)
+          p_min_donation: Number(form.min_donation),
+          p_avatar_url: form.avatar_url || null,
         })
         if (error) throw error
         if (data && !data.success) {
@@ -167,17 +225,25 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
         <p className="text-zinc-500 text-xs">Ubah nama, username, bio, dan minimum donasi.</p>
       </div>
 
+      {/* ── Profile Form ─────────────────────────────────── */}
       <form onSubmit={handleSubmit} className="glass-card p-6 flex flex-col gap-5">
-        {/* Avatar */}
+        {/* Avatar + URL */}
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center font-display font-black text-xl text-white bg-violet-600">
-            {(form.display_name?.[0] ?? '?').toUpperCase()}
-          </div>
-          <div>
+          <Avatar src={form.avatar_url} name={form.display_name} size={56} />
+          <div className="flex-1 min-w-0">
             <p className="font-bold text-zinc-100 text-sm">{form.display_name || 'Display Name'}</p>
             <p className="text-xs text-zinc-500 mt-0.5">nyawer.id/{form.username}</p>
           </div>
         </div>
+
+        <div>
+          <label className={LABEL}>URL Avatar <span className="normal-case text-zinc-600 ml-1">(opsional)</span></label>
+          <input id="setting-avatar-url" type="url" value={form.avatar_url}
+            onChange={(e) => set('avatar_url', e.target.value)}
+            placeholder="https://example.com/foto.jpg" className={INPUT} />
+          <p className="text-[10px] text-zinc-600 mt-1.5">Tempel URL gambar profil kamu.</p>
+        </div>
+
         <div className="divider-neon" />
 
         <div>
@@ -191,10 +257,30 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
           <div className="flex">
             <span className="flex items-center px-3.5 bg-zinc-900 border border-r-0 border-zinc-800 rounded-l-lg text-xs text-zinc-500 select-none whitespace-nowrap">nyawer.id/</span>
             <input id="setting-username" type="text" value={form.username} required maxLength={30}
-              onChange={(e) => set('username', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              onChange={handleUsernameChange}
               placeholder="usernamekamu" className={`${INPUT} rounded-l-none border-l-0`} />
           </div>
-          <p className="text-[10px] text-zinc-600 mt-1.5">Hanya huruf kecil, angka, dan underscore.</p>
+          {/* Username availability indicator */}
+          <div className="flex items-center gap-1.5 mt-1.5">
+            {usernameStatus === 'checking' && (
+              <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                <Loader2 size={10} className="animate-spin" /> Memeriksa...
+              </span>
+            )}
+            {usernameStatus === 'available' && (
+              <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                <Check size={10} /> Tersedia
+              </span>
+            )}
+            {usernameStatus === 'taken' && (
+              <span className="text-[10px] text-red-400 flex items-center gap-1">
+                <X size={10} /> Sudah digunakan
+              </span>
+            )}
+            {usernameStatus === null && (
+              <p className="text-[10px] text-zinc-600">Huruf kecil, angka, dan underscore. Min. 3 karakter.</p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -230,6 +316,171 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
         </button>
       </form>
 
+      {/* ── Change Password ──────────────────────────────── */}
+      <ChangePasswordSection sessionToken={sessionToken} />
+
+      {/* ── Delete Account ───────────────────────────────── */}
+      <DeleteAccountSection sessionToken={sessionToken} />
+
+      <Toast toasts={toasts} removeToast={removeToast} />
+    </div>
+  )
+}
+
+
+/* ── Change Password Sub-Section ────────────────────────── */
+function ChangePasswordSection({ sessionToken }) {
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState({ current: '', newPw: '', confirm: '' })
+  const [saving, setSaving] = useState(false)
+  const { toasts, addToast, removeToast } = useToast()
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (form.newPw.length < 6) {
+      addToast({ message: 'Password baru minimal 6 karakter.', type: 'error' }); return
+    }
+    if (form.newPw !== form.confirm) {
+      addToast({ message: 'Konfirmasi password tidak cocok.', type: 'error' }); return
+    }
+    setSaving(true)
+    try {
+      if (isSupabaseReady && supabase) {
+        const { data, error } = await supabase.rpc('change_password', {
+          p_session_token: sessionToken,
+          p_current_password: form.current,
+          p_new_password: form.newPw,
+        })
+        if (error) throw error
+        if (data && !data.success) throw new Error(data.message)
+      } else {
+        await new Promise((r) => setTimeout(r, 800))
+      }
+      addToast({ message: 'Password berhasil diubah!' })
+      setForm({ current: '', newPw: '', confirm: '' })
+      setOpen(false)
+    } catch (err) {
+      addToast({ message: err.message ?? 'Gagal mengubah password.', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="glass-card mt-4 overflow-hidden">
+      <button onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-zinc-900/30 transition-colors">
+        <div>
+          <p className="text-xs font-bold text-zinc-200">Ubah Password</p>
+          <p className="text-[10px] text-zinc-500 mt-0.5">Perbarui password akun kamu.</p>
+        </div>
+        <svg className={`w-4 h-4 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <form onSubmit={handleSubmit} className="px-5 pb-5 flex flex-col gap-4 border-t border-zinc-800/40">
+          <div className="pt-4">
+            <label className={LABEL}>Password Saat Ini</label>
+            <input id="setting-current-password" type="password" value={form.current} required
+              onChange={(e) => set('current', e.target.value)} placeholder="••••••••" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Password Baru</label>
+            <input id="setting-new-password" type="password" value={form.newPw} required minLength={6}
+              onChange={(e) => set('newPw', e.target.value)} placeholder="Minimal 6 karakter" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Konfirmasi Password Baru</label>
+            <input id="setting-confirm-password" type="password" value={form.confirm} required minLength={6}
+              onChange={(e) => set('confirm', e.target.value)} placeholder="Ulangi password baru" className={INPUT} />
+          </div>
+          <button id="setting-change-pw-btn" type="submit" disabled={saving}
+            className={`w-full py-2 rounded-lg text-xs font-semibold btn-glass flex items-center justify-center gap-2 ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : null}
+            <span>{saving ? 'Menyimpan...' : 'Ubah Password'}</span>
+          </button>
+        </form>
+      )}
+      <Toast toasts={toasts} removeToast={removeToast} />
+    </div>
+  )
+}
+
+
+/* ── Delete Account Sub-Section ─────────────────────────── */
+function DeleteAccountSection({ sessionToken }) {
+  const [open, setOpen] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
+  const [saving, setSaving] = useState(false)
+  const { signOut } = useAuth()
+  const navigate = useNavigate()
+  const { toasts, addToast, removeToast } = useToast()
+
+  const handleDelete = async () => {
+    setSaving(true)
+    try {
+      if (isSupabaseReady && supabase) {
+        const { data, error } = await supabase.rpc('delete_account', {
+          p_session_token: sessionToken,
+        })
+        if (error) throw error
+        if (data && !data.success) throw new Error(data.message)
+      } else {
+        await new Promise((r) => setTimeout(r, 800))
+      }
+      await signOut()
+      navigate('/', { replace: true })
+    } catch (err) {
+      addToast({ message: err.message ?? 'Gagal menghapus akun.', type: 'error' })
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="glass-card mt-4 overflow-hidden border-red-900/30">
+      <button onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-red-950/10 transition-colors">
+        <div className="flex items-center gap-3">
+          <AlertTriangle size={15} className="text-red-400 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-red-400">Hapus Akun</p>
+            <p className="text-[10px] text-zinc-500 mt-0.5">Hapus akun dan semua data secara permanen.</p>
+          </div>
+        </div>
+        <svg className={`w-4 h-4 text-zinc-500 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="px-5 pb-5 border-t border-red-900/20">
+          <div className="bg-red-950/20 border border-red-900/30 rounded-lg p-4 mt-4">
+            <p className="text-xs text-red-300 font-semibold mb-2">Peringatan: Tindakan ini tidak dapat dibatalkan.</p>
+            <ul className="text-[10px] text-zinc-400 space-y-1 list-disc list-inside">
+              <li>Semua donasi dan data akan dihapus permanen</li>
+              <li>Username kamu akan tersedia untuk orang lain</li>
+              <li>Link donasi publik akan berhenti berfungsi</li>
+            </ul>
+          </div>
+          <div className="mt-4">
+            <label className={LABEL}>Ketik <strong className="text-red-400">HAPUS</strong> untuk konfirmasi</label>
+            <input id="setting-delete-confirm" type="text" value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="HAPUS" className={INPUT} />
+          </div>
+          <button id="setting-delete-btn" onClick={handleDelete}
+            disabled={saving || confirmText !== 'HAPUS'}
+            className={`w-full mt-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+              confirmText === 'HAPUS'
+                ? 'bg-red-950/60 border border-red-800/50 text-red-300 hover:bg-red-950/80'
+                : 'bg-zinc-900 border border-zinc-800/40 text-zinc-600 cursor-not-allowed'
+            } ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={13} />}
+            <span>{saving ? 'Menghapus...' : 'Hapus Akun Saya'}</span>
+          </button>
+        </div>
+      )}
       <Toast toasts={toasts} removeToast={removeToast} />
     </div>
   )
@@ -491,7 +742,7 @@ export default function Dashboard() {
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-3">
-        <img src="/logo.png" alt="Nyawer" className="w-10 h-10 rounded-lg object-cover animate-pulse" />
+        <img src="/mascot-loading.png" alt="Memuat" className="w-14 h-14 object-contain animate-spin" />
         <p className="text-zinc-500 text-xs font-semibold tracking-wider uppercase">Memuat Dashboard...</p>
       </div>
     )
@@ -534,9 +785,7 @@ export default function Dashboard() {
         {/* Profile + logout */}
         <div className="bg-zinc-900/40 border border-zinc-800/60 rounded-lg p-3 mt-4">
           <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center font-display font-black text-xs text-white bg-violet-600">
-              {profile.display_name[0]?.toUpperCase()}
-            </div>
+            <Avatar src={profile.avatar_url} name={profile.display_name} size={32} />
             <div className="overflow-hidden flex-1">
               <p className="text-xs font-semibold text-zinc-200 truncate">{profile.display_name}</p>
               <p className="text-[10px] text-zinc-500 truncate">{user?.email ?? 'demo@nyawer.id'}</p>

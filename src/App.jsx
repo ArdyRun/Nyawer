@@ -16,8 +16,6 @@ import {
   X,
   Sparkles,
   CheckCircle2,
-  Radio,
-  Cpu,
   Globe,
 } from 'lucide-react';
 
@@ -171,103 +169,124 @@ function HeroSection() {
   return (
     <section
       id="hero"
-      className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-grid pt-16"
-      style={{ background: 'radial-gradient(ellipse 60% 40% at 50% -5%, rgba(124, 58, 237, 0.04) 0%, transparent 60%), #09090b' }}
+      className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden bg-grid pt-24 pb-16"
+      style={{ background: 'radial-gradient(ellipse 60% 40% at 50% -5%, rgba(124, 58, 237, 0.03) 0%, transparent 60%), #09090b' }}
     >
-      {/* Main content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center py-20">
-        {/* Badge */}
-        <div className="flex justify-center mb-6 animate-slide-up">
-          <div className="badge-neon">
-            <span className="dot" />
-            Platform Donasi Streamer Indonesia
+      {/* Layout Grid 2 Kolom untuk keindahan Asimetris modern */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+        {/* Kolom Kiri: Teks & Informasi Utama */}
+        <div className="lg:col-span-7 text-left flex flex-col items-start">
+          {/* Badge */}
+          <div className="mb-6 animate-slide-up">
+            <div className="badge-neon">
+              <span className="dot" />
+              Platform Donasi Streamer Indonesia
+            </div>
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="font-display font-black leading-tight mb-6 animate-slide-up delay-100 text-zinc-50 text-4xl sm:text-5xl md:text-6xl"
+            style={{ opacity: 0, animationFillMode: 'forwards' }}
+          >
+            <span className="block tracking-tight">
+              SUPPORT STREAMER-MU
+            </span>
+            <span className="block font-black text-zinc-400 mt-1">
+              CUMA KENA <span className="text-violet-500">{count}%</span>
+            </span>
+          </h1>
+
+          {/* Sub-headline */}
+          <p
+            className="text-sm sm:text-base md:text-lg text-zinc-400 max-w-xl mb-8 font-normal leading-relaxed animate-slide-up delay-200"
+            style={{ opacity: 0, animationFillMode: 'forwards' }}
+          >
+            Potongan flat 4% tanpa biaya tersembunyi. Dukungan Anda terkirim penuh ke streamer favorit, bukan ke kantong platform.
+          </p>
+
+          {/* Stats row */}
+          <div
+            className="flex flex-wrap gap-8 mb-8 animate-slide-up delay-200"
+            style={{ opacity: 0, animationFillMode: 'forwards' }}
+          >
+            {[
+              { label: 'Streamer Aktif', value: '12K+', icon: Users },
+              { label: 'Donasi Tersalur', value: 'Rp 8M+', icon: DollarSign },
+              { label: 'Rating Kepuasan', value: '4.9 / 5', icon: Star },
+            ].map(({ label, value, icon: Icon }) => (
+              <div key={label} className="flex flex-col items-start gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <Icon size={13} className="text-zinc-500" />
+                  <span className="text-lg font-display font-extrabold text-zinc-100">
+                    {value}
+                  </span>
+                </div>
+                <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Buttons */}
+          <div
+            className="flex flex-col sm:flex-row gap-3.5 w-full sm:w-auto animate-slide-up delay-300"
+            style={{ opacity: 0, animationFillMode: 'forwards' }}
+          >
+            <button
+              id="hero-btn-mulai"
+              onClick={() => navigate('/register')}
+              className="btn-neon px-6 py-3 rounded-lg text-xs font-semibold flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <Zap size={14} className="fill-current" />
+              Mulai Nyawer
+              <ArrowRight size={14} />
+            </button>
+
+            <button
+              id="hero-btn-demo"
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+              className="btn-glass px-6 py-3 rounded-lg text-xs font-semibold flex items-center gap-2 w-full sm:w-auto justify-center"
+            >
+              <Play size={13} className="text-zinc-400" />
+              Lihat Demo
+            </button>
+          </div>
+
+          {/* Trust badges */}
+          <div
+            className="flex flex-wrap gap-4 sm:gap-6 mt-10 animate-fade-in delay-500"
+            style={{ opacity: 0, animationFillMode: 'forwards' }}
+          >
+            {[
+              { icon: Shield, text: 'Transaksi Aman' },
+              { icon: CheckCircle2, text: 'Tanpa Biaya Admin' },
+              { icon: Globe, text: 'Dukungan 24/7' },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-1.5 text-[11px] text-zinc-500 font-medium">
+                <Icon size={11} className="text-zinc-500" />
+                {text}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Headline */}
-        <h1
-          className="font-display font-black leading-none mb-6 animate-slide-up delay-100 text-zinc-50"
-          style={{ opacity: 0, animationFillMode: 'forwards' }}
-        >
-          <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-tight">
-            SUPPORT STREAMER-MU
-          </span>
-          <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl mt-2 font-black text-zinc-400">
-            CUMA KENA <span className="text-violet-500">{count}%</span>
-          </span>
-        </h1>
-
-        {/* Sub-headline */}
-        <p
-          className="text-base md:text-lg text-zinc-400 max-w-xl mx-auto mb-8 font-normal leading-relaxed animate-slide-up delay-200"
-          style={{ opacity: 0, animationFillMode: 'forwards' }}
-        >
-          Potongan flat 4% tanpa biaya tersembunyi. Dukungan Anda terkirim penuh ke streamer favorit, bukan ke kantong platform.
-        </p>
-
-        {/* Stats row */}
-        <div
-          className="flex flex-wrap justify-center gap-8 mb-10 animate-slide-up delay-200"
-          style={{ opacity: 0, animationFillMode: 'forwards' }}
-        >
-          {[
-            { label: 'Streamer Aktif', value: '12K+', icon: Users },
-            { label: 'Donasi Tersalur', value: 'Rp 8M+', icon: DollarSign },
-            { label: 'Rating Kepuasan', value: '4.9 / 5', icon: Star },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-1.5">
-                <Icon size={13} className="text-zinc-500" />
-                <span className="text-xl font-display font-extrabold text-zinc-100">
-                  {value}
-                </span>
-              </div>
-              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">{label}</span>
-            </div>
-          ))}
+        {/* Kolom Kanan: Maskot Koin Wave Besar & Dinamis */}
+        <div className="lg:col-span-5 flex justify-center lg:justify-end items-center animate-fade-in delay-300">
+          <div className="relative group select-none">
+            {/* Soft background glow */}
+            <div className="absolute inset-0 bg-violet-600/10 rounded-full blur-3xl filter opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+            <img
+              src="/mascot-wave.png"
+              alt="Mascot Wave"
+              className="w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80 object-contain relative z-10 transition-transform duration-500 hover:scale-105"
+              style={{
+                filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.5))'
+              }}
+            />
+          </div>
         </div>
 
-        {/* CTA Buttons */}
-        <div
-          className="flex flex-col sm:flex-row gap-3.5 justify-center items-center animate-slide-up delay-300"
-          style={{ opacity: 0, animationFillMode: 'forwards' }}
-        >
-          <button
-            id="hero-btn-mulai"
-            onClick={() => navigate('/register')}
-            className="btn-neon px-6 py-3.5 rounded-lg text-sm font-semibold flex items-center gap-2 w-full sm:w-auto justify-center"
-          >
-            <Zap size={15} className="fill-current" />
-            Mulai Nyawer
-            <ArrowRight size={15} />
-          </button>
-
-          <button
-            id="hero-btn-demo"
-            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            className="btn-glass px-6 py-3.5 rounded-lg text-sm font-semibold flex items-center gap-2 w-full sm:w-auto justify-center"
-          >
-            <Play size={14} className="text-zinc-400" />
-            Lihat Demo
-          </button>
-        </div>
-
-        {/* Trust badges */}
-        <div
-          className="flex flex-wrap justify-center gap-6 mt-12 animate-fade-in delay-500"
-          style={{ opacity: 0, animationFillMode: 'forwards' }}
-        >
-          {[
-            { icon: Shield, text: 'Transaksi Aman & Terenkripsi' },
-            { icon: CheckCircle2, text: 'Tanpa Biaya Admin Tambahan' },
-            { icon: Globe, text: 'Dukungan 24/7' },
-          ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center gap-2 text-xs text-zinc-500 font-medium">
-              <Icon size={12} className="text-zinc-500" />
-              {text}
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   );
