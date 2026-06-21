@@ -177,25 +177,12 @@ function HeroSection() {
 
         {/* Kolom Kiri: Teks & Informasi Utama */}
         <div className="lg:col-span-7 text-left flex flex-col items-start">
-          {/* Badge */}
-          <div className="mb-6 animate-slide-up">
-            <div className="badge-neon">
-              <span className="dot" />
-              Platform Donasi Streamer Indonesia
-            </div>
-          </div>
-
           {/* Headline */}
           <h1
             className="font-display font-black leading-tight mb-6 animate-slide-up delay-100 text-zinc-50 text-4xl sm:text-5xl md:text-6xl"
             style={{ opacity: 0, animationFillMode: 'forwards' }}
           >
-            <span className="block tracking-tight">
-              SUPPORT STREAMER-MU
-            </span>
-            <span className="block font-black text-zinc-400 mt-1">
-              CUMA KENA <span className="text-violet-500">{count}%</span>
-            </span>
+            SUPPORT STREAMER-MU CUMA KENA <span className="text-violet-500">{count}%</span>
           </h1>
 
           {/* Sub-headline */}
