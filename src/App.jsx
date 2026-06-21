@@ -176,7 +176,7 @@ function HeroSection() {
       <div className="relative z-10 max-w-6xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
         {/* Kolom Kiri: Teks & Informasi Utama */}
-        <div className="lg:col-span-7 text-left flex flex-col items-start">
+        <div className="lg:col-span-6 text-left flex flex-col items-start z-20">
           {/* Headline */}
           <h1
             className="font-display font-black leading-tight mb-6 animate-slide-up delay-100 text-zinc-50 text-4xl sm:text-5xl md:text-6xl"
@@ -258,17 +258,16 @@ function HeroSection() {
           </div>
         </div>
 
-        {/* Kolom Kanan: Maskot Koin Wave Besar & Dinamis */}
-        <div className="lg:col-span-5 flex justify-center lg:justify-end items-center animate-fade-in delay-300">
-          <div className="relative group select-none">
-            {/* Soft background glow */}
-            <div className="absolute inset-0 bg-violet-600/10 rounded-full blur-3xl filter opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+        {/* Kolom Kanan: Maskot Group 4:3 Melayang Bebas (Scale & Translate on Desktop) - Tersembunyi di bawah 1024px */}
+        <div className="hidden lg:flex lg:col-span-6 justify-center lg:justify-end items-center relative">
+          <div className="relative w-full max-w-md lg:max-w-none lg:scale-120 xl:scale-130 lg:origin-center lg:translate-x-0 xl:translate-x-2 lg:-translate-y-2 group select-none z-10 pointer-events-none transition-transform duration-300">
+            <div className="absolute inset-0 bg-violet-600/5 rounded-full blur-3xl filter opacity-45 group-hover:opacity-65 transition-opacity duration-500" />
             <img
-              src="/mascot-wave.png"
-              alt="Mascot Wave"
-              className="w-64 h-64 sm:w-96 sm:h-96 lg:w-[420px] lg:h-[420px] object-contain relative z-10 transition-transform duration-500 hover:scale-105"
+              src="/mascot-hero-trio.png"
+              alt="Mascot Group"
+              className="w-full h-auto object-contain transition-transform duration-500 hover:scale-[1.02] pointer-events-auto"
               style={{
-                filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.55))'
+                filter: 'drop-shadow(0 20px 45px rgba(0,0,0,0.5))'
               }}
             />
           </div>
@@ -379,19 +378,29 @@ function FeaturesSection() {
         </div>
 
         {/* Comparison teaser */}
-        <div className="mt-16 glass-card p-6 md:p-8 max-w-2xl mx-auto" id="simulation">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-            <h3 className="font-display font-bold text-xl text-zinc-100">
-              Simulasi Potongan Donasi
-            </h3>
+        <div className="mt-16 glass-card p-6 md:p-10 w-full" id="simulation">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Sisi Kiri: Deskripsi & Maskot */}
+            <div className="lg:col-span-5 flex flex-col items-start text-left">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                <h3 className="font-display font-bold text-xl text-zinc-100">
+                  Simulasi Potongan Donasi
+                </h3>
+              </div>
+              <p className="text-zinc-400 text-xs leading-relaxed mb-6">
+                Bandingkan potongan donasi dari platform kami dengan penyedia layanan serupa lainnya secara langsung. Temukan efisiensi terbaik untuk stream Anda.
+              </p>
+              <div className="hidden lg:flex justify-start w-full mt-2">
+                <img src="/mascot-hero-group.png" alt="Mascot Group" className="w-full h-auto object-contain max-w-[380px]" style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.4))' }} />
+              </div>
+            </div>
+
+            {/* Sisi Kanan: Form Simulator */}
+            <div className="lg:col-span-7 w-full">
+              <FeeSimulator />
+            </div>
           </div>
-
-          <p className="text-zinc-500 text-xs mb-6">
-            Bandingkan potongan donasi dari platform kami dengan penyedia layanan serupa lainnya secara langsung.
-          </p>
-
-          <FeeSimulator />
         </div>
       </div>
     </section>

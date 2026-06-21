@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   Zap, BarChart3, Settings, Copy, ExternalLink, RefreshCw,
   TrendingUp, Users, DollarSign, Monitor, LogOut, Play, CheckCircle2,
-  Bell, FileText, Smartphone, HelpCircle, AlertTriangle, Check, X, Loader2
+  Bell, FileText, Smartphone, HelpCircle, AlertTriangle, Check, X, Loader2,
+  Trophy, Target
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
@@ -12,7 +13,7 @@ import Avatar from '../components/ui/Avatar'
 import StatusBadge from '../components/ui/StatusBadge'
 import { supabase, isSupabaseReady } from '../lib/supabase'
 import { MOCK_PROFILE, MOCK_DONATIONS } from '../lib/mockData'
-import { formatRp, formatDate } from '../lib/utils'
+import { formatRp, formatDate, formatDateShort } from '../lib/utils'
 
 /* ── Shared styles (Refined Shape and Color Locks) ─────────── */
 const INPUT = 'w-full bg-zinc-900/60 border border-zinc-800 rounded-lg px-3.5 py-2 text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:bg-zinc-900 transition-colors'
@@ -21,21 +22,59 @@ const LABEL = 'block text-[10px] font-bold text-zinc-500 uppercase tracking-wide
 /* ════════════════════════════════════════════════════════════
    STATS TAB
 ════════════════════════════════════════════════════════════ */
+const PAGE_SIZE = 10
+const DATE_PRESETS = [
+  { label: 'Hari Ini',  days: 0 },
+  { label: '7 Hari',    days: 7 },
+  { label: '30 Hari',   days: 30 },
+  { label: 'Semua',     days: null },
+]
+const STATUS_FILTERS = ['semua', 'success', 'pending', 'failed']
+const STATUS_LABELS = { semua: 'Semua', success: 'Sukses', pending: 'Pending', failed: 'Gagal' }
+
 function StatsTab({ profile, donations, onRefresh }) {
   const { toasts, addToast, removeToast } = useToast()
+  const [datePreset, setDatePreset]     = useState(null) // null = Semua
+  const [statusFilter, setStatusFilter] = useState('semua')
+  const [search, setSearch]             = useState('')
+  const [hideTest, setHideTest]         = useState(true)
+  const [page, setPage]                 = useState(1)
 
-  const successOnly   = donations.filter((d) => d.status === 'success' && !d.is_test)
-  const totalGross    = successOnly.reduce((s, d) => s + d.amount, 0)
-  const totalReceived = successOnly.reduce((s, d) => s + (d.amount_received ?? Math.floor(d.amount * 0.96)), 0)
-  const payUrl        = `${window.location.origin}/pay/${profile.username}`
+  // ── Filter logic ──────────────────────────────────────────
+  const filtered = donations.filter((d) => {
+    if (hideTest && d.is_test) return false
+    if (statusFilter !== 'semua' && d.status !== statusFilter) return false
+    if (search && !d.sender_name.toLowerCase().includes(search.toLowerCase())) return false
+    if (datePreset !== null) {
+      const now = new Date()
+      const start = new Date()
+      start.setDate(now.getDate() - datePreset)
+      start.setHours(0, 0, 0, 0)
+      if (new Date(d.created_at) < start) return false
+    }
+    return true
+  })
+
+  const successFiltered = filtered.filter((d) => d.status === 'success')
+  const totalGross      = successFiltered.reduce((s, d) => s + d.amount, 0)
+  const totalReceived   = successFiltered.reduce((s, d) => s + (d.amount_received ?? Math.floor(d.amount * 0.96)), 0)
+  const payUrl          = `${window.location.origin}/pay/${profile.username}`
+
+  // ── Pagination ────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage   = Math.min(page, totalPages)
+  const paged      = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  // Reset page when filters change
+  const resetPage = () => setPage(1)
 
   const copy = (text, label) =>
     navigator.clipboard.writeText(text).then(() => addToast({ message: `${label} disalin!` }))
 
   const statCards = [
-    { label: 'Total Donasi Masuk', value: formatRp(totalGross),    sub: `${successOnly.length} transaksi sukses`, icon: DollarSign },
-    { label: 'Pendapatan Bersih',  value: formatRp(totalReceived), sub: 'Setelah potongan 4%',                    icon: TrendingUp },
-    { label: 'Total Donatur',      value: String(successOnly.length),       sub: 'Sepanjang waktu',                        icon: Users },
+    { label: 'Total Donasi Masuk', value: formatRp(totalGross),          sub: `${successFiltered.length} transaksi sukses`, icon: DollarSign },
+    { label: 'Pendapatan Bersih',  value: formatRp(totalReceived),       sub: 'Setelah potongan 4%',                        icon: TrendingUp },
+    { label: 'Total Donatur',      value: String(successFiltered.length), sub: 'Sesuai filter aktif',                        icon: Users },
   ]
 
   return (
@@ -44,7 +83,7 @@ function StatsTab({ profile, donations, onRefresh }) {
         <h1 className="font-display font-bold text-2xl text-zinc-100 mb-1">
           Halo, {profile.display_name}
         </h1>
-        <p className="text-zinc-500 text-xs">Ringkasan aktivitas donasi Anda hari ini.</p>
+        <p className="text-zinc-500 text-xs">Ringkasan aktivitas donasi Anda.</p>
       </div>
 
       {/* Stat cards */}
@@ -78,14 +117,63 @@ function StatsTab({ profile, donations, onRefresh }) {
         <p className="text-[10px] text-zinc-600 mt-1.5">Bagikan ke penonton di chat, bio, atau sosmed.</p>
       </div>
 
-      {/* Donation table */}
+      {/* Donation table + filters */}
       <div className="glass-card overflow-hidden">
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800/40 bg-zinc-900/10">
-          <h3 className="font-display font-bold text-sm text-zinc-100">5 Donasi Terakhir</h3>
+          <h3 className="font-display font-bold text-sm text-zinc-100">
+            Donasi <span className="text-zinc-500 font-normal">({filtered.length})</span>
+          </h3>
           <button onClick={onRefresh} className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500 hover:text-zinc-300 transition-colors">
             <RefreshCw size={11} /> Refresh
           </button>
         </div>
+
+        {/* Filters */}
+        <div className="px-5 py-3 border-b border-zinc-800/40 bg-zinc-900/5 flex flex-col gap-3">
+          {/* Row 1: Search + Hide test */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-xs">
+              <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); resetPage() }}
+                placeholder="Cari nama pengirim..."
+                className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <label className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-semibold cursor-pointer select-none">
+              <input type="checkbox" checked={hideTest} onChange={(e) => { setHideTest(e.target.checked); resetPage() }}
+                className="w-3.5 h-3.5 rounded border-zinc-700 bg-zinc-900 text-violet-500 focus:ring-violet-500 focus:ring-offset-0" />
+              Sembunyikan test
+            </label>
+          </div>
+          {/* Row 2: Date presets + Status */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex gap-1">
+              {DATE_PRESETS.map(({ label, days }) => (
+                <button key={label} onClick={() => { setDatePreset(days); resetPage() }}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${
+                    datePreset === days ? 'bg-violet-950/60 border border-violet-700/50 text-violet-300' : 'bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300'
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="w-px h-4 bg-zinc-800" />
+            <div className="flex gap-1">
+              {STATUS_FILTERS.map((s) => (
+                <button key={s} onClick={() => { setStatusFilter(s); resetPage() }}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${
+                    statusFilter === s ? 'bg-violet-950/60 border border-violet-700/50 text-violet-300' : 'bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300'
+                  }`}>
+                  {STATUS_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead>
@@ -96,7 +184,13 @@ function StatsTab({ profile, donations, onRefresh }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-900/30">
-              {donations.slice(0, 5).map((d) => (
+              {paged.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-xs text-zinc-500">
+                    {donations.length === 0 ? 'Belum ada donasi.' : 'Tidak ada donasi yang cocok dengan filter.'}
+                  </td>
+                </tr>
+              ) : paged.map((d) => (
                 <tr key={d.id} className="hover:bg-zinc-900/20 transition-colors">
                   <td className="px-5 py-3 text-xs font-semibold text-zinc-100">
                     {d.sender_name}
@@ -112,6 +206,25 @@ function StatsTab({ profile, donations, onRefresh }) {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-5 py-3 border-t border-zinc-800/40 bg-zinc-900/5">
+            <p className="text-[10px] text-zinc-500">
+              Halaman {safePage} dari {totalPages}
+            </p>
+            <div className="flex gap-1">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                Prev
+              </button>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Toast toasts={toasts} removeToast={removeToast} />
@@ -489,7 +602,7 @@ function DeleteAccountSection({ sessionToken }) {
 /* ════════════════════════════════════════════════════════════
    OVERLAY TAB
 ════════════════════════════════════════════════════════════ */
-function OverlayTab({ profile, user, sessionToken }) {
+function OverlayTab({ profile, user, sessionToken, onProfileUpdate }) {
   const { toasts, addToast, removeToast } = useToast()
   const [testing, setTesting] = useState(false)
   const [testSent, setTestSent] = useState(false)
@@ -502,7 +615,6 @@ function OverlayTab({ profile, user, sessionToken }) {
       label: 'Alert URL',
       url: `${base}/overlay/alert/${profile.id}`,
       desc: 'Popup donasi real-time. Ukuran: 1920×1080.',
-      color: '#7c3aed',
     },
     {
       id: 'marquee',
@@ -510,7 +622,6 @@ function OverlayTab({ profile, user, sessionToken }) {
       label: 'Marquee URL',
       url: `${base}/overlay/marquee/${profile.id}`,
       desc: 'Running text histori donasi. Ukuran: 1920×80.',
-      color: '#a1a1aa',
     },
     {
       id: 'qr',
@@ -518,7 +629,20 @@ function OverlayTab({ profile, user, sessionToken }) {
       label: 'QR Code URL',
       url: `${base}/overlay/qr/${profile.id}`,
       desc: 'QR scan untuk donasi. Ukuran bebas.',
-      color: '#71717a',
+    },
+    {
+      id: 'leaderboard',
+      icon: Trophy,
+      label: 'Leaderboard URL',
+      url: `${base}/overlay/leaderboard/${profile.id}`,
+      desc: 'Top 10 donatur. Ukuran: 300×400.',
+    },
+    {
+      id: 'goal',
+      icon: Target,
+      label: 'Goal URL',
+      url: `${base}/overlay/goal/${profile.id}`,
+      desc: 'Progress bar target donasi. Ukuran: 440×100.',
     },
   ]
 
@@ -549,7 +673,6 @@ function OverlayTab({ profile, user, sessionToken }) {
           throw new Error(data.message)
         }
       } else {
-        // Demo mode: kirim via localStorage storage event
         await new Promise((r) => setTimeout(r, 600))
         localStorage.setItem('nyawer_test_alert', JSON.stringify(testDonation))
       }
@@ -585,7 +708,7 @@ function OverlayTab({ profile, user, sessionToken }) {
 
       {/* URL boxes */}
       <div className="flex flex-col gap-4 mb-6">
-        {overlayUrls.map(({ id, icon: IconComponent, label, url, desc, color }) => (
+        {overlayUrls.map(({ id, icon: IconComponent, label, url, desc }) => (
           <div key={id} className="glass-card p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -608,16 +731,18 @@ function OverlayTab({ profile, user, sessionToken }) {
                 </a>
               </div>
             </div>
-            <code
-              className="text-xs font-mono block truncate rounded-lg px-3 py-2 border bg-zinc-900 border-zinc-800/80 text-violet-400">
+            <code className="text-xs font-mono block truncate rounded-lg px-3 py-2 border bg-zinc-900 border-zinc-800/80 text-violet-400">
               {url}
             </code>
           </div>
         ))}
       </div>
 
+      {/* Goal Target Setting */}
+      <GoalTargetSection profile={profile} sessionToken={sessionToken} onProfileUpdate={onProfileUpdate} />
+
       {/* Test alert section */}
-      <div className="glass-card p-5">
+      <div className="glass-card p-5 mt-4">
         <h3 className="font-display font-bold text-base text-zinc-100 mb-2 flex items-center gap-2">
           <Play size={15} className="text-violet-400 fill-current" />
           Uji Coba Alert
@@ -651,6 +776,180 @@ function OverlayTab({ profile, user, sessionToken }) {
             Mode Demo - buka halaman Alert Overlay <strong>di tab yang sama browser ini</strong> agar localStorage event bekerja.
           </p>
         )}
+      </div>
+
+      <Toast toasts={toasts} removeToast={removeToast} />
+    </div>
+  )
+}
+
+
+/* ── Goal Target Setting ────────────────────────────────── */
+function GoalTargetSection({ profile, sessionToken, onProfileUpdate }) {
+  const [target, setTarget]         = useState(profile.donation_target ?? 0)
+  const [current, setCurrent]       = useState(profile.donation_goal_current ?? 0)
+  const [addAmount, setAddAmount]   = useState('')
+  const [saving, setSaving]         = useState(false)
+  const { toasts, addToast, removeToast } = useToast()
+
+  // Sync when profile changes externally
+  useEffect(() => {
+    setTarget(profile.donation_target ?? 0)
+    setCurrent(profile.donation_goal_current ?? 0)
+  }, [profile.donation_target, profile.donation_goal_current])
+
+  const handleSetTarget = async () => {
+    const val = Number(target)
+    if (val < 0) {
+      addToast({ message: 'Target tidak boleh negatif.', type: 'error' }); return
+    }
+    setSaving(true)
+    try {
+      if (isSupabaseReady && supabase) {
+        const { data, error } = await supabase.rpc('set_donation_target', {
+          p_session_token: sessionToken,
+          p_target: val,
+        })
+        if (error) throw error
+        if (data && !data.success) throw new Error(data.message)
+      } else {
+        await new Promise((r) => setTimeout(r, 600))
+      }
+      onProfileUpdate?.({ donation_target: val })
+      addToast({ message: 'Target donasi berhasil disimpan!' })
+    } catch (err) {
+      addToast({ message: err.message ?? 'Gagal menyimpan target.', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleResetCurrent = async () => {
+    setSaving(true)
+    try {
+      if (isSupabaseReady && supabase) {
+        const { data, error } = await supabase.rpc('reset_donation_goal', {
+          p_session_token: sessionToken,
+        })
+        if (error) throw error
+        if (data && !data.success) throw new Error(data.message)
+      } else {
+        await new Promise((r) => setTimeout(r, 400))
+      }
+      setCurrent(0)
+      onProfileUpdate?.({ donation_goal_current: 0 })
+      addToast({ message: 'Progress donasi direset ke 0.' })
+    } catch (err) {
+      addToast({ message: err.message ?? 'Gagal reset progress.', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddManual = async () => {
+    const val = Number(addAmount)
+    if (!val || val <= 0) {
+      addToast({ message: 'Masukkan nominal yang valid.', type: 'error' }); return
+    }
+    const newCurrent = current + val
+    setSaving(true)
+    try {
+      if (isSupabaseReady && supabase) {
+        const { data, error } = await supabase.rpc('add_to_goal', {
+          p_session_token: sessionToken,
+          p_amount: val,
+        })
+        if (error) throw error
+        if (data && !data.success) throw new Error(data.message)
+      } else {
+        await new Promise((r) => setTimeout(r, 400))
+      }
+      setCurrent(newCurrent)
+      setAddAmount('')
+      onProfileUpdate?.({ donation_goal_current: newCurrent })
+      addToast({ message: `Berhasil menambah ${formatRp(val)} ke goal.` })
+    } catch (err) {
+      addToast({ message: err.message ?? 'Gagal menambah ke goal.', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0
+
+  return (
+    <div className="glass-card p-5">
+      <h3 className="font-display font-bold text-base text-zinc-100 mb-1 flex items-center gap-2">
+        <Target size={15} className="text-violet-400" />
+        Target Donasi
+      </h3>
+      <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+        Atur target dan progress untuk overlay <strong className="text-zinc-300 font-semibold">Goal</strong>.
+      </p>
+
+      {/* Current progress preview */}
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-3 mb-4">
+        <div className="flex justify-between text-[10px] text-zinc-500 mb-1.5">
+          <span>Progress saat ini</span>
+          <span>{pct}%</span>
+        </div>
+        <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mb-2">
+          <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400 transition-all"
+            style={{ width: `${pct}%` }} />
+        </div>
+        <div className="flex justify-between items-baseline">
+          <span className="font-display font-bold text-sm text-zinc-100">{formatRp(current)}</span>
+          <span className="text-[10px] text-zinc-500">/ {formatRp(target)}</span>
+        </div>
+      </div>
+
+      {/* Set target */}
+      <div className="mb-3">
+        <label className={LABEL}>Target Donasi</label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">Rp</span>
+            <input id="overlay-goal-target" type="number" value={target} min={0} step={10000}
+              onChange={(e) => setTarget(Math.max(0, Number(e.target.value)))}
+              placeholder="0"
+              className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+          </div>
+          <button id="overlay-goal-set" onClick={handleSetTarget} disabled={saving}
+            className="px-4 py-2 rounded-lg text-xs font-semibold btn-neon flex items-center gap-1.5 disabled:opacity-60">
+            {saving ? <Loader2 size={12} className="animate-spin" /> : null}
+            Set Target
+          </button>
+        </div>
+      </div>
+
+      {/* Add manual amount */}
+      <div className="mb-3">
+        <label className={LABEL}>Tambah Manual <span className="normal-case text-zinc-600 ml-1">(donasi luar platform)</span></label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">Rp</span>
+            <input id="overlay-goal-add" type="number" value={addAmount} min={1000} step={1000}
+              onChange={(e) => setAddAmount(e.target.value)}
+              placeholder="Nominal"
+              className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+          </div>
+          <button id="overlay-goal-add-btn" onClick={handleAddManual} disabled={saving || !addAmount}
+            className="px-4 py-2 rounded-lg text-xs font-semibold btn-glass flex items-center gap-1.5 disabled:opacity-60">
+            Tambah
+          </button>
+        </div>
+      </div>
+
+      {/* Reset current */}
+      <div className="flex items-center justify-between bg-zinc-900/30 border border-zinc-800/40 rounded-lg px-3 py-2.5">
+        <div>
+          <p className="text-[10px] font-bold text-zinc-400">Reset Progress</p>
+          <p className="text-[10px] text-zinc-600">Atur ulang progress ke 0 (target tetap).</p>
+        </div>
+        <button id="overlay-goal-reset" onClick={handleResetCurrent} disabled={saving || current === 0}
+          className="px-3 py-1.5 rounded-lg text-[10px] font-semibold bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-red-400 hover:border-red-900/40 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+          Reset ke 0
+        </button>
       </div>
 
       <Toast toasts={toasts} removeToast={removeToast} />
@@ -814,7 +1113,7 @@ export default function Dashboard() {
 
         {tab === 'stats'    && <StatsTab profile={profile} donations={donations} onRefresh={fetchDashboardData} />}
         {tab === 'settings' && <SettingsTab profile={profile} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} sessionToken={sessionToken} />}
-        {tab === 'overlay'  && <OverlayTab profile={profile} user={user} sessionToken={sessionToken} />}
+        {tab === 'overlay'  && <OverlayTab profile={profile} user={user} sessionToken={sessionToken} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} />}
       </main>
     </div>
   )

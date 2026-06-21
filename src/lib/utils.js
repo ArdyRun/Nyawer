@@ -9,6 +9,14 @@ export const formatDate = (iso) =>
     timeStyle: 'short',
   })
 
+/** Format ISO date ke tanggal saja (tanpa jam). */
+export const formatDateShort = (iso) =>
+  new Date(iso).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
 /** Potong string dan tambahkan ellipsis jika melebihi panjang. */
 export const truncate = (str, n = 40) =>
   (str?.length ?? 0) > n ? str.slice(0, n) + '…' : (str ?? '')
