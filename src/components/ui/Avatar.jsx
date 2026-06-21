@@ -6,7 +6,8 @@ import { useState } from 'react'
  */
 export default function Avatar({ src, name, size = 56, className = '' }) {
   const [imgError, setImgError] = useState(false)
-  const initial = (name ?? '?')[0].toUpperCase()
+  const initialName = name && name.trim() ? name.trim() : '?'
+  const initial = initialName[0].toUpperCase()
   const showImage = src && !imgError
 
   return (

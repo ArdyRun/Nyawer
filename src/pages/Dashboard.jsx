@@ -248,6 +248,51 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
   const debounceRef = useRef(null)
   const { toasts, addToast, removeToast } = useToast()
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validasi ukuran (maksimal 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      addToast({ message: 'Ukuran file maksimal adalah 2MB.', type: 'error' })
+      return
+    }
+
+    // Validasi tipe file
+    if (!file.type.startsWith('image/')) {
+      addToast({ message: 'Hanya file gambar yang diperbolehkan.', type: 'error' })
+      return
+    }
+
+    setUploading(true)
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Gagal mengunggah berkas')
+      const result = await response.json()
+
+      if (result.success && result.url) {
+        set('avatar_url', result.url)
+        addToast({ message: 'Foto berhasil diunggah!' })
+      } else {
+        throw new Error('Respons tidak valid')
+      }
+    } catch (err) {
+      console.error(err)
+      addToast({ message: 'Gagal mengunggah foto profil.', type: 'error' })
+    } finally {
+      setUploading(false)
+    }
+  }
 
   // ── Username availability check (debounced) ─────────────
   const checkUsername = useCallback((value) => {
@@ -340,21 +385,49 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
 
       {/* ── Profile Form ─────────────────────────────────── */}
       <form onSubmit={handleSubmit} className="glass-card p-6 flex flex-col gap-5">
-        {/* Avatar + URL */}
+        {/* Avatar + Upload */}
         <div className="flex items-center gap-4">
-          <Avatar src={form.avatar_url} name={form.display_name} size={56} />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="relative rounded-lg overflow-hidden group cursor-pointer flex-shrink-0"
+            title="Klik untuk ubah foto profil"
+          >
+            <Avatar src={form.avatar_url} name={form.display_name} size={56} />
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity duration-200">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white mb-0.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span className="text-[8px] text-zinc-300 font-semibold uppercase tracking-wider">Ubah</span>
+            </div>
+            {uploading && (
+              <div className="absolute inset-0 bg-zinc-950/80 flex items-center justify-center">
+                <Loader2 size={16} className="animate-spin text-violet-400" />
+              </div>
+            )}
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleAvatarUpload}
+            className="hidden"
+            accept="image/*"
+          />
+
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-zinc-100 text-sm">{form.display_name || 'Display Name'}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-zinc-100 text-sm">{form.display_name || 'Display Name'}</p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-[10px] text-violet-400 hover:text-violet-300 transition-colors font-semibold"
+              >
+                Pilih File
+              </button>
+            </div>
             <p className="text-xs text-zinc-500 mt-0.5">nyawer.id/{form.username}</p>
           </div>
-        </div>
-
-        <div>
-          <label className={LABEL}>URL Avatar <span className="normal-case text-zinc-600 ml-1">(opsional)</span></label>
-          <input id="setting-avatar-url" type="url" value={form.avatar_url}
-            onChange={(e) => set('avatar_url', e.target.value)}
-            placeholder="https://example.com/foto.jpg" className={INPUT} />
-          <p className="text-[10px] text-zinc-600 mt-1.5">Tempel URL gambar profil kamu.</p>
         </div>
 
         <div className="divider-neon" />
