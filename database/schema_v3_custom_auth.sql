@@ -126,6 +126,8 @@ ALTER TABLE public.donations ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "profiles: public can read all" ON public.profiles FOR SELECT TO anon, authenticated USING (true);
 
+CREATE POLICY "donations: public can read all" ON public.donations FOR SELECT TO anon, authenticated USING (true);
+
 CREATE POLICY "donations: public can insert success direct"
   ON public.donations FOR INSERT TO anon, authenticated
   WITH CHECK (
