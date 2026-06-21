@@ -52,10 +52,8 @@ function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" id="nav-logo" className="flex items-center gap-2.5 group select-none">
-          <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center transition-colors group-hover:bg-violet-500">
-            <Zap size={15} className="text-white fill-white" />
-          </div>
+        <a href="#" id="nav-logo" className="flex items-center gap-2 group select-none">
+          <img src="/logo.png" alt="Nyawer" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-display font-bold text-lg tracking-wider text-zinc-50">
             NYAWER
           </span>
@@ -709,9 +707,7 @@ function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-violet-600 rounded-lg flex items-center justify-center">
-              <Zap size={12} className="text-white fill-white" />
-            </div>
+            <img src="/logo.png" alt="Nyawer" className="w-6 h-6 rounded-lg object-cover" />
             <span className="font-display font-bold text-sm tracking-wider text-zinc-100">
               NYAWER
             </span>

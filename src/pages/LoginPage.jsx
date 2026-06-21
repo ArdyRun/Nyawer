@@ -73,10 +73,8 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
-            <Zap size={15} className="text-white fill-white" />
-          </div>
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <img src="/logo.png" alt="Nyawer" className="w-10 h-10 rounded-xl object-cover" />
           <span className="font-display font-bold text-xl tracking-wider text-zinc-50">
             NYAWER
           </span>

@@ -491,9 +491,7 @@ export default function Dashboard() {
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-3">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center animate-pulse bg-zinc-900 border border-zinc-800">
-          <Zap size={18} className="text-violet-400 fill-current" />
-        </div>
+        <img src="/logo.png" alt="Nyawer" className="w-10 h-10 rounded-lg object-cover animate-pulse" />
         <p className="text-zinc-500 text-xs font-semibold tracking-wider uppercase">Memuat Dashboard...</p>
       </div>
     )
@@ -504,10 +502,8 @@ export default function Dashboard() {
       {/* ── Sidebar (desktop) ─────────────────────────── */}
       <aside className="hidden lg:flex w-60 flex-col flex-shrink-0 bg-zinc-950 border-r border-zinc-900 p-5">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 mb-8">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-violet-600">
-            <Zap size={14} className="text-white fill-white" />
-          </div>
+        <Link to="/" className="flex items-center gap-2 mb-8">
+          <img src="/logo.png" alt="Nyawer" className="w-7 h-7 rounded-lg object-cover" />
           <span className="font-display font-bold text-base tracking-wider text-zinc-100">
             NYAWER
           </span>
