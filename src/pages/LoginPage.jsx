@@ -74,14 +74,8 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-sm">
         {/* Card */}
         <div className="glass-card p-6 md:p-8">
-          {/* Logo & Mascot Group */}
+          {/* Mascot Group */}
           <div className="flex flex-col items-center mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <img src="/logo.png" alt="Nyawer" className="w-7 h-7 rounded-lg object-cover" />
-              <span className="font-display font-bold text-lg tracking-wider text-zinc-50">
-                NYAWER
-              </span>
-            </div>
             <img src="/mascot-id.png" alt="Nyawer Mascot" className="w-24 h-24 object-contain" />
           </div>
 

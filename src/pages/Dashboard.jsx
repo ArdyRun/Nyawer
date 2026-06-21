@@ -4,7 +4,7 @@ import {
   Zap, BarChart3, Settings, Copy, ExternalLink, RefreshCw,
   TrendingUp, Users, DollarSign, Monitor, LogOut, Play, CheckCircle2,
   Bell, FileText, Smartphone, HelpCircle, AlertTriangle, Check, X, Loader2,
-  Trophy, Target
+  Trophy, Target, Sparkles
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
@@ -599,6 +599,57 @@ function DeleteAccountSection({ sessionToken }) {
   )
 }
 
+/* ── Peta Tema Lengkap DaisyUI dengan warna HEX untuk Pratinjau ─── */
+const OVERLAY_THEMES = {
+  default: { label: 'Default (Nyawer Violet)', bg: '#18181b', primary: '#7c3aed', secondary: '#ec4899', accent: '#22d3ee', text: '#fafafa' },
+  light: { label: 'Light', bg: '#ffffff', primary: '#422ad5', secondary: '#f43098', accent: '#00d3bb', text: '#18181b' },
+  dark: { label: 'Dark', bg: '#1d232a', primary: '#605dff', secondary: '#f43098', accent: '#00d3bb', text: '#ecf9ff' },
+  cupcake: { label: 'Cupcake', bg: '#faf7f5', primary: '#44ebd3', secondary: '#f9cbe5', accent: '#ffd6a7', text: '#291334' },
+  bumblebee: { label: 'Bumblebee', bg: '#ffffff', primary: '#fdc700', secondary: '#ff8904', accent: '#000000', text: '#161616' },
+  emerald: { label: 'Emerald', bg: '#ffffff', primary: '#66cc8a', secondary: '#377cfb', accent: '#f68067', text: '#333c4d' },
+  corporate: { label: 'Corporate', bg: '#ffffff', primary: '#0082ce', secondary: '#61738d', accent: '#009689', text: '#181a2a' },
+  synthwave: { label: 'Synthwave', bg: '#09002f', primary: '#f861b4', secondary: '#71d1fe', accent: '#ff8904', text: '#a1b1ff' },
+  retro: { label: 'Retro', bg: '#ece3ca', primary: '#ff9fa0', secondary: '#b7f6cd', accent: '#d08700', text: '#793205' },
+  cyberpunk: { label: 'Cyberpunk', bg: '#fff248', primary: '#ff6596', secondary: '#00e8ff', accent: '#ce74ff', text: '#000000' },
+  valentine: { label: 'Valentine', bg: '#fcf2f8', primary: '#f43098', secondary: '#ab44ff', accent: '#71d1fe', text: '#c5005a' },
+  halloween: { label: 'Halloween', bg: '#1b1816', primary: '#ff8f00', secondary: '#7a00c2', accent: '#42aa00', text: '#cdcdcd' },
+  garden: { label: 'Garden', bg: '#e9e7e7', primary: '#fe0075', secondary: '#8e4162', accent: '#5c7f67', text: '#100f0f' },
+  forest: { label: 'Forest', bg: '#1b1717', primary: '#1fb854', secondary: '#1eb88e', accent: '#1fb8ab', text: '#cac9c9' },
+  aqua: { label: 'Aqua', bg: '#1a368b', primary: '#13ecf3', secondary: '#966fb3', accent: '#ffe999', text: '#b8e6fe' },
+  lofi: { label: 'Lofi', bg: '#ffffff', primary: '#0d0d0d', secondary: '#1a1919', accent: '#262626', text: '#000000' },
+  pastel: { label: 'Pastel', bg: '#ffffff', primary: '#e9d4ff', secondary: '#feccd2', accent: '#a3f2ce', text: '#161616' },
+  fantasy: { label: 'Fantasy', bg: '#ffffff', primary: '#6d0076', secondary: '#0075c2', accent: '#ff8600', text: '#1f2937' },
+  wireframe: { label: 'Wireframe', bg: '#ffffff', primary: '#d4d4d4', secondary: '#d4d4d4', accent: '#d4d4d4', text: '#161616' },
+  black: { label: 'Black', bg: '#000000', primary: '#3a3a3a', secondary: '#3a3a3a', accent: '#3a3a3a', text: '#d6d6d6' },
+  luxury: { label: 'Luxury', bg: '#09090b', primary: '#ffffff', secondary: '#152747', accent: '#513448', text: '#dca54d' },
+  dracula: { label: 'Dracula', bg: '#282a36', primary: '#ff79c6', secondary: '#bd93f9', accent: '#ffb86c', text: '#f8f8f3' },
+  cmyk: { label: 'CMYK', bg: '#ffffff', primary: '#45aeee', secondary: '#e8488a', accent: '#fff234', text: '#161616' },
+  autumn: { label: 'Autumn', bg: '#f1f1f1', primary: '#8c0327', secondary: '#d59b6b', accent: '#d59b6b', text: '#141414' },
+  business: { label: 'Business', bg: '#202020', primary: '#1c4e80', secondary: '#7c909a', accent: '#ea6947', text: '#cdcdcd' },
+  acid: { label: 'Acid', bg: '#fff7ed', primary: '#ff00ff', secondary: '#ff6e00', accent: '#c8ff00', text: '#000000' },
+  lemonade: { label: 'Lemonade', bg: '#f8fdef', primary: '#419400', secondary: '#bdc000', accent: '#edd000', text: '#151614' },
+  night: { label: 'Night', bg: '#0f172a', primary: '#3abdf7', secondary: '#818cf8', accent: '#f471b5', text: '#c9cbd0' },
+  coffee: { label: 'Coffee', bg: '#261b25', primary: '#db924c', secondary: '#273e3f', accent: '#11576d', text: '#c59f61' },
+  winter: { label: 'Winter', bg: '#ffffff', primary: '#394e6a', secondary: '#0069ff', accent: '#463aa2', text: '#161616' },
+  dim: { label: 'Dim', bg: '#2a303c', primary: '#9fe88d', secondary: '#ff7d5d', accent: '#c792e9', text: '#b2ccd6' },
+  nord: { label: 'Nord', bg: '#eceff4', primary: '#5e81ac', secondary: '#81a1c1', accent: '#88c0d0', text: '#2e3440' },
+  sunset: { label: 'Sunset', bg: '#121c22', primary: '#ff865b', secondary: '#fd6f9c', accent: '#b387fa', text: '#9fb9d0' },
+  abyss: { label: 'Abyss', bg: '#001e29', primary: '#bdff00', secondary: '#cebef4', accent: '#505050', text: '#ffd6a7' },
+  silk: { label: 'Silk', bg: '#f7f5f3', primary: '#1c1c29', secondary: '#1c1c29', accent: '#1c1c29', text: '#4b4743' }
+}
+
+function isThemeLight(hexColor) {
+  if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return false
+  const c = hexColor.substring(1)
+  const rgb = parseInt(c, 16)
+  if (isNaN(rgb)) return false
+  const r = (rgb >> 16) & 0xff
+  const g = (rgb >> 8) & 0xff
+  const b = (rgb >> 0) & 0xff
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return luma > 180
+}
+
 /* ════════════════════════════════════════════════════════════
    OVERLAY TAB
 ════════════════════════════════════════════════════════════ */
@@ -606,6 +657,19 @@ function OverlayTab({ profile, user, sessionToken, onProfileUpdate }) {
   const { toasts, addToast, removeToast } = useToast()
   const [testing, setTesting] = useState(false)
   const [testSent, setTestSent] = useState(false)
+  const [selectedTheme, setSelectedTheme] = useState('default')
+  const [showThemeDropdown, setShowThemeDropdown] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowThemeDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   const base = window.location.origin
   const overlayUrls = [
@@ -613,35 +677,35 @@ function OverlayTab({ profile, user, sessionToken, onProfileUpdate }) {
       id: 'alert',
       icon: Bell,
       label: 'Alert URL',
-      url: `${base}/overlay/alert/${profile.id}`,
+      url: `${base}/overlay/alert/${profile.id}?theme=${selectedTheme}`,
       desc: 'Popup donasi real-time. Ukuran: 1920×1080.',
     },
     {
       id: 'marquee',
       icon: FileText,
       label: 'Marquee URL',
-      url: `${base}/overlay/marquee/${profile.id}`,
+      url: `${base}/overlay/marquee/${profile.id}?theme=${selectedTheme}`,
       desc: 'Running text histori donasi. Ukuran: 1920×80.',
     },
     {
       id: 'qr',
       icon: Smartphone,
       label: 'QR Code URL',
-      url: `${base}/overlay/qr/${profile.id}`,
+      url: `${base}/overlay/qr/${profile.id}?theme=${selectedTheme}`,
       desc: 'QR scan untuk donasi. Ukuran bebas.',
     },
     {
       id: 'leaderboard',
       icon: Trophy,
       label: 'Leaderboard URL',
-      url: `${base}/overlay/leaderboard/${profile.id}`,
+      url: `${base}/overlay/leaderboard/${profile.id}?theme=${selectedTheme}`,
       desc: 'Top 10 donatur. Ukuran: 300×400.',
     },
     {
       id: 'goal',
       icon: Target,
       label: 'Goal URL',
-      url: `${base}/overlay/goal/${profile.id}`,
+      url: `${base}/overlay/goal/${profile.id}?theme=${selectedTheme}`,
       desc: 'Progress bar target donasi. Ukuran: 440×100.',
     },
   ]
@@ -687,95 +751,277 @@ function OverlayTab({ profile, user, sessionToken, onProfileUpdate }) {
   }
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="font-display font-bold text-2xl text-zinc-100 mb-1">Overlay OBS</h1>
         <p className="text-zinc-500 text-xs">Salin URL di bawah dan tambahkan sebagai Browser Source di OBS.</p>
       </div>
 
-      {/* OBS instructions */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-5">
-        <p className="text-xs font-bold text-zinc-200 mb-2 flex items-center gap-1.5">
-          <HelpCircle size={14} className="text-zinc-400" /> Cara Menambahkan ke OBS
-        </p>
-        <ol className="text-xs text-zinc-400 space-y-1 list-decimal list-inside leading-relaxed">
-          <li>Di OBS, klik tombol <strong className="text-zinc-300 font-semibold">+</strong> di panel Sources</li>
-          <li>Pilih <strong className="text-zinc-300 font-semibold">Browser</strong> lalu isi URL dari salah satu di bawah</li>
-          <li>Atur Width/Height sesuai keterangan masing-masing overlay</li>
-          <li>Centang opsi <strong className="text-zinc-300 font-semibold">"Page background color: transparent"</strong></li>
-        </ol>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Kolom Kiri: Setelan & URL (60% Lebar) */}
+        <div className="lg:col-span-7 flex flex-col gap-5">
+          {/* Theme Selector (Custom Popover with Color Previews) */}
+          <div className="glass-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-20" ref={dropdownRef}>
+            <div>
+              <p className="text-xs font-bold text-zinc-200">Tema Warna Overlay</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Pilih skema warna alert & marquee untuk disalin ke OBS.</p>
+            </div>
 
-      {/* URL boxes */}
-      <div className="flex flex-col gap-4 mb-6">
-        {overlayUrls.map(({ id, icon: IconComponent, label, url, desc }) => (
-          <div key={id} className="glass-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-zinc-900 border border-zinc-800">
-                  <IconComponent size={14} className="text-zinc-400" />
+            <div className="relative">
+              {/* Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setShowThemeDropdown(!showThemeDropdown)}
+                className="w-full sm:w-auto bg-zinc-900 border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-zinc-100 flex items-center justify-between gap-3 hover:text-white hover:border-zinc-700 transition-colors min-w-[200px]"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <span className="capitalize">{selectedTheme}</span>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-200">{label}</p>
-                  <p className="text-[10px] text-zinc-500">{desc}</p>
+
+                {/* Color preview of active theme */}
+                <div className="flex items-center gap-0.5 rounded px-1.5 py-0.5" style={{ backgroundColor: OVERLAY_THEMES[selectedTheme]?.bg || '#18181b', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="w-2.5 h-2.5 rounded-full flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: OVERLAY_THEMES[selectedTheme]?.primary }}>A</div>
+                  <div className="w-2.5 h-2.5 rounded-full flex items-center justify-center text-[6px] font-bold text-white" style={{ backgroundColor: OVERLAY_THEMES[selectedTheme]?.secondary }}>A</div>
+                  <div className="w-2.5 h-2.5 rounded-full flex items-center justify-center text-[6px] font-bold text-black" style={{ backgroundColor: OVERLAY_THEMES[selectedTheme]?.accent }}>A</div>
+                  <div className="w-2.5 h-2.5 rounded-full flex items-center justify-center text-[6px] font-bold text-black" style={{ backgroundColor: OVERLAY_THEMES[selectedTheme]?.text }}>A</div>
+                </div>
+              </button>
+
+              {/* Popover Dropdown Panel */}
+              {showThemeDropdown && (
+                <div className="absolute right-0 mt-2 z-50 w-[280px] bg-zinc-950 border border-zinc-850 p-2 rounded-lg shadow-2xl max-h-[320px] overflow-y-auto flex flex-col gap-1">
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider px-2 py-1 border-b border-zinc-900 mb-1">Pilih Tema</p>
+                  {Object.keys(OVERLAY_THEMES).map((themeKey) => {
+                    const theme = OVERLAY_THEMES[themeKey]
+                    return (
+                      <button
+                        key={themeKey}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTheme(themeKey)
+                          setShowThemeDropdown(false)
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-md text-left transition-all ${
+                          selectedTheme === themeKey
+                            ? 'bg-zinc-900 border border-zinc-800 text-zinc-100'
+                            : 'hover:bg-zinc-900/50 border border-transparent text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        <span className="text-xs font-semibold truncate capitalize">{themeKey}</span>
+
+                        {/* Color preview blocks */}
+                        <div className="flex items-center gap-0.5 rounded p-1 shadow-sm shrink-0 border border-zinc-900/40" style={{ backgroundColor: theme.bg }}>
+                          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white" style={{ backgroundColor: theme.primary }}>A</div>
+                          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-white" style={{ backgroundColor: theme.secondary }}>A</div>
+                          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-black" style={{ backgroundColor: theme.accent }}>A</div>
+                          <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold text-black" style={{ backgroundColor: theme.text }}>A</div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* OBS instructions */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+            <p className="text-xs font-bold text-zinc-200 mb-2 flex items-center gap-1.5">
+              <HelpCircle size={14} className="text-zinc-400" /> Cara Menambahkan ke OBS
+            </p>
+            <ol className="text-xs text-zinc-400 space-y-1 list-decimal list-inside leading-relaxed">
+              <li>Di OBS, klik tombol <strong className="text-zinc-300 font-semibold">+</strong> di panel Sources</li>
+              <li>Pilih <strong className="text-zinc-300 font-semibold">Browser</strong> lalu isi URL dari salah satu di bawah</li>
+              <li>Atur Width/Height sesuai keterangan masing-masing overlay</li>
+              <li>Centang opsi <strong className="text-zinc-300 font-semibold">"Page background color: transparent"</strong></li>
+            </ol>
+          </div>
+
+          {/* URL boxes */}
+          <div className="flex flex-col gap-4">
+            {overlayUrls.map(({ id, icon: IconComponent, label, url, desc }) => (
+              <div key={id} className="glass-card p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-zinc-900 border border-zinc-800">
+                      <IconComponent size={14} className="text-zinc-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-zinc-200">{label}</p>
+                      <p className="text-[10px] text-zinc-500">{desc}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={() => copy(url, label)}
+                      className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors" title="Salin URL">
+                      <Copy size={13} />
+                    </button>
+                    <a href={url} target="_blank" rel="noopener noreferrer"
+                      className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors" title="Buka di tab baru">
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+                </div>
+                <code className="text-xs font-mono block truncate rounded-lg px-3 py-2 border bg-zinc-900 border-zinc-800/80 text-violet-400">
+                  {url}
+                </code>
+              </div>
+            ))}
+          </div>
+
+          {/* Goal Target Setting */}
+          <GoalTargetSection profile={profile} sessionToken={sessionToken} onProfileUpdate={onProfileUpdate} />
+
+          {/* Test alert section */}
+          <div className="glass-card p-5">
+            <h3 className="font-display font-bold text-base text-zinc-100 mb-2 flex items-center gap-2">
+              <Play size={15} className="text-violet-400 fill-current" />
+              Uji Coba Alert
+            </h3>
+            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+              Klik tombol untuk mengirim donasi uji coba (Rp 50.000) ke halaman{' '}
+              <a href={`${window.location.origin}/overlay/alert/${profile.id}?theme=${selectedTheme}`} target="_blank" rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300 underline underline-offset-2">
+                Alert Overlay
+              </a>.
+              Pastikan halaman tersebut sudah terbuka di tab lain atau OBS.
+            </p>
+
+            <button id="overlay-test-btn" onClick={sendTestAlert} disabled={testing || testSent}
+              className={`btn-neon px-5 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 ${(testing || testSent) ? 'opacity-70 cursor-not-allowed' : ''}`}>
+              {testSent ? (
+                <CheckCircle2 size={14} />
+              ) : testing ? (
+                <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <Play size={13} className="fill-current" />
+              )}
+              <span>{testSent ? 'Alert Terkirim!' : testing ? 'Mengirim...' : 'Kirim Uji Coba Alert'}</span>
+            </button>
+
+            {!isSupabaseReady && (
+              <p className="text-[10px] text-zinc-500 mt-2.5">
+                Mode Demo - buka halaman Alert Overlay <strong>di tab yang sama browser ini</strong> agar localStorage event bekerja.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Kolom Kanan: Live Preview (40% Lebar) */}
+        <div className="lg:col-span-5 flex flex-col gap-4 sticky top-6">
+          <div className="glass-card p-5">
+            <h3 className="text-xs font-bold text-zinc-200 mb-1 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-violet-400" /> Live Preview OBS
+            </h3>
+            <p className="text-[10px] text-zinc-500 mb-4">Pratinjau tampilan alert & marquee berdasarkan tema terpilih.</p>
+
+            {/* OBS Simulator Screen (Checkerboard Pattern) */}
+            <div
+              className="relative w-full h-[320px] rounded-lg border border-zinc-800 flex flex-col justify-between overflow-hidden p-4 select-none"
+              style={{
+                backgroundImage: 'linear-gradient(45deg, #18181b 25%, transparent 25%), linear-gradient(-45deg, #18181b 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #18181b 75%), linear-gradient(-45deg, transparent 75%, #18181b 75%)',
+                backgroundSize: '16px 16px',
+                backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                backgroundColor: '#09090b',
+              }}
+            >
+              <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-zinc-900/80 border border-zinc-800/60 text-[9px] font-bold text-zinc-500 tracking-wider uppercase">
+                OBS Screen (Transparan)
+              </div>
+
+              {/* 1. Alert Card Preview */}
+              <div className="flex justify-center w-full mt-10">
+                <div
+                  className="w-full max-w-[280px] rounded-lg border p-3 flex flex-col gap-2 shadow-xl animate-float transition-all duration-300"
+                  style={{
+                    backgroundColor: OVERLAY_THEMES[selectedTheme].bg,
+                    borderColor: selectedTheme === 'default' ? 'rgba(63, 63, 70, 0.4)' : OVERLAY_THEMES[selectedTheme].primary + '4D',
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ color: OVERLAY_THEMES[selectedTheme].primary, flexShrink: 0 }}>
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                    </svg>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: OVERLAY_THEMES[selectedTheme].text,
+                        fontFamily: 'Inter, sans-serif',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      BudiGaming
+                      <span className="text-zinc-500 font-normal mx-1">mengirim</span>
+                      <span style={{ color: OVERLAY_THEMES[selectedTheme].accent, fontWeight: 800 }}>
+                        Rp 50.000
+                      </span>
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      borderLeft: `1.5px solid ${OVERLAY_THEMES[selectedTheme].primary}`,
+                      paddingLeft: 8,
+                      paddingTop: 1,
+                      paddingBottom: 1,
+                      color: isThemeLight(OVERLAY_THEMES[selectedTheme].bg) ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.65)',
+                      fontSize: 10,
+                      fontStyle: 'italic',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    "Maju terus bang! Mabar Valorant lagi!"
+                  </div>
+
+                  {/* Progress Line */}
+                  <div className="w-full h-[1px] bg-white/5 relative overflow-hidden mt-1">
+                    <div className="absolute left-0 top-0 h-full w-[60%] animate-pulse" style={{ backgroundColor: OVERLAY_THEMES[selectedTheme].primary }} />
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => copy(url, label)}
-                  className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors" title="Salin URL">
-                  <Copy size={13} />
-                </button>
-                <a href={url} target="_blank" rel="noopener noreferrer"
-                  className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors" title="Buka di tab baru">
-                  <ExternalLink size={13} />
-                </a>
+
+              {/* 2. Marquee Bar Preview */}
+              <div
+                className="w-full h-8 flex items-center px-3 border-t overflow-hidden relative"
+                style={{
+                  backgroundColor: OVERLAY_THEMES[selectedTheme].bg,
+                  borderColor: selectedTheme === 'default' ? 'rgba(63, 63, 70, 0.4)' : OVERLAY_THEMES[selectedTheme].primary + '4D',
+                  marginLeft: '-16px',
+                  marginRight: '-16px',
+                  width: 'calc(100% + 32px)',
+                  marginBottom: '-16px',
+                }}
+              >
+                <div
+                  className="flex items-center gap-1 py-1 px-2.5 h-full mr-2 z-10 shrink-0"
+                  style={{ backgroundColor: OVERLAY_THEMES[selectedTheme].primary }}
+                >
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style={{ color: OVERLAY_THEMES[selectedTheme].bg === '#ffffff' ? '#09090b' : '#ffffff' }}>
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                  </svg>
+                  <span
+                    className="text-[8px] font-bold uppercase tracking-wider"
+                    style={{ color: isThemeLight(OVERLAY_THEMES[selectedTheme].bg) ? '#09090b' : '#ffffff' }}
+                  >
+                    Nyawer
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 truncate z-10 text-[9px] font-medium leading-none">
+                  <span style={{ color: isThemeLight(OVERLAY_THEMES[selectedTheme].bg) ? '#18181b' : OVERLAY_THEMES[selectedTheme].text }}>BudiGaming</span>
+                  <span style={{ color: OVERLAY_THEMES[selectedTheme].accent, fontWeight: 700 }}>Rp 50.000</span>
+                  <span style={{ color: isThemeLight(OVERLAY_THEMES[selectedTheme].bg) ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>"Maju terus bang!"</span>
+                </div>
               </div>
             </div>
-            <code className="text-xs font-mono block truncate rounded-lg px-3 py-2 border bg-zinc-900 border-zinc-800/80 text-violet-400">
-              {url}
-            </code>
           </div>
-        ))}
-      </div>
-
-      {/* Goal Target Setting */}
-      <GoalTargetSection profile={profile} sessionToken={sessionToken} onProfileUpdate={onProfileUpdate} />
-
-      {/* Test alert section */}
-      <div className="glass-card p-5 mt-4">
-        <h3 className="font-display font-bold text-base text-zinc-100 mb-2 flex items-center gap-2">
-          <Play size={15} className="text-violet-400 fill-current" />
-          Uji Coba Alert
-        </h3>
-        <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
-          Klik tombol untuk mengirim donasi uji coba (Rp 50.000) ke halaman{' '}
-          <a href={`${window.location.origin}/overlay/alert/${profile.id}`} target="_blank" rel="noopener noreferrer"
-            className="text-violet-400 hover:text-violet-300 underline underline-offset-2">
-            Alert Overlay
-          </a>.
-          Pastikan halaman tersebut sudah terbuka di tab lain atau OBS.
-        </p>
-
-        <button id="overlay-test-btn" onClick={sendTestAlert} disabled={testing || testSent}
-          className={`btn-neon px-5 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 ${(testing || testSent) ? 'opacity-70 cursor-not-allowed' : ''}`}>
-          {testSent ? (
-            <CheckCircle2 size={14} />
-          ) : testing ? (
-            <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          ) : (
-            <Play size={13} className="fill-current" />
-          )}
-          <span>{testSent ? 'Alert Terkirim!' : testing ? 'Mengirim...' : 'Kirim Uji Coba Alert'}</span>
-        </button>
-
-        {!isSupabaseReady && (
-          <p className="text-[10px] text-zinc-500 mt-2.5">
-            Mode Demo - buka halaman Alert Overlay <strong>di tab yang sama browser ini</strong> agar localStorage event bekerja.
-          </p>
-        )}
+        </div>
       </div>
 
       <Toast toasts={toasts} removeToast={removeToast} />
