@@ -49,57 +49,38 @@ export default function QROverlay() {
       {/* QR Widget */}
       <div
         style={{
-          background: 'rgba(5,5,15,0.88)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(168,85,247,0.3)',
-          borderRadius: 24,
-          padding: 20,
-          boxShadow: '0 0 60px rgba(168,85,247,0.2), 0 8px 40px rgba(0,0,0,0.6)',
+          background: 'rgba(9,9,11,0.95)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(63, 63, 70, 0.4)',
+          borderRadius: 12,
+          padding: 14,
+          boxShadow: '0 12px 24px -10px rgba(0, 0, 0, 0.6)',
         }}
       >
         {/* Header */}
         <p style={{
-          fontSize: 10,
-          fontFamily: 'Outfit, sans-serif',
-          fontWeight: 800,
+          fontSize: 9,
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 700,
           textTransform: 'uppercase',
-          letterSpacing: '0.18em',
+          letterSpacing: '0.12em',
           textAlign: 'center',
-          marginBottom: 14,
-          background: 'linear-gradient(135deg, #a855f7, #22d3ee)',
-          WebkitBackgroundClip: 'text',
-          backgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          marginBottom: 8,
+          color: '#a1a1aa',
         }}>
-          ✦ Scan untuk Nyawer ✦
+          Scan untuk Nyawer
         </p>
 
         {/* QR Code */}
-        <div style={{ background: 'white', borderRadius: 16, padding: 12, display: 'flex' }}>
+        <div style={{ background: '#ffffff', borderRadius: 8, padding: 8, display: 'flex' }}>
           <QRCodeSVG
             value={payUrl}
-            size={160}
+            size={120}
             level="M"
-            fgColor="#050505"
+            fgColor="#09090b"
             bgColor="#ffffff"
           />
-        </div>
-
-        {/* Username + Live dot */}
-        <div style={{ marginTop: 12, textAlign: 'center' }}>
-          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600 }}>
-            nyawer.id/{profile.username}
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 5 }}>
-            <div style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: '#4ade80',
-              boxShadow: '0 0 8px #4ade80',
-              animation: 'pulse 2s ease-in-out infinite',
-            }} />
-            <span style={{ color: '#4ade80', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Live</span>
-          </div>
         </div>
       </div>
     </div>

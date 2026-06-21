@@ -14,7 +14,7 @@ export default function StatusBadge({ status }) {
     >
       <span
         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ background: s.dot, boxShadow: `0 0 6px ${s.dot}` }}
+        style={{ background: s.dot }}
       />
       {s.label}
     </span>

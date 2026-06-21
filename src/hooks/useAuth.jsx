@@ -11,7 +11,7 @@ const DEMO_PROFILE = {
   username: 'cobazeus',
   display_name: 'Demo Streamer',
   min_donation: 10000,
-  bio: 'Main game seru-seruan bareng viewer! Jangan lupa pencet tombol nyawer 🎮',
+  bio: 'Main game seru-seruan bareng viewer! Jangan lupa pencet tombol nyawer.',
 }
 
 const AuthContext = createContext(null)

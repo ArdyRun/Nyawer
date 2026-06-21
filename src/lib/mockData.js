@@ -2,7 +2,7 @@
 export const MOCK_PROFILE = {
   id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
   username: 'cobazeus',
-  display_name: 'Coba Zeus 🎮',
+  display_name: 'Coba Zeus',
   bio: 'Streamer FPS kompetitif. Main VALORANT & CS2 setiap malam jam 8! GG EZ no re.',
   min_donation: 10000,
   avatar_url: null,

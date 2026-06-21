@@ -10,17 +10,15 @@ import { formatRp } from '../lib/utils'
 /* ── Nominal presets ────────────────────────────────────────── */
 const PRESETS = [10000, 25000, 50000, 100000]
 
-/* ── Avatar placeholder ─────────────────────────────────────── */
-function Avatar({ name, size = 80 }) {
+/* ── Avatar placeholder (Refined style, no glowing shadow) ──── */
+function Avatar({ name, size = 64 }) {
   const initial = (name ?? '?')[0].toUpperCase()
   return (
     <div
-      className="rounded-3xl flex items-center justify-center font-display font-black text-white flex-shrink-0"
+      className="rounded-xl flex items-center justify-center font-display font-black text-white flex-shrink-0 bg-violet-600"
       style={{
         width: size, height: size,
-        background: 'linear-gradient(135deg, #7c3aed, #22d3ee)',
         fontSize: size * 0.35,
-        boxShadow: '0 0 40px rgba(124,58,237,0.4)',
       }}
     >
       {initial}
@@ -31,33 +29,29 @@ function Avatar({ name, size = 80 }) {
 /* ── Success screen ─────────────────────────────────────────── */
 function SuccessScreen({ streamer, amount, onReset }) {
   return (
-    <div className="text-center py-16 flex flex-col items-center gap-6 animate-slide-up">
-      <div className="relative">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg,#a855f7,#22d3ee)', boxShadow: '0 0 60px rgba(168,85,247,0.4)' }}>
-          <CheckCircle2 size={40} className="text-white" />
-        </div>
-        <div className="absolute -top-2 -right-2 text-2xl animate-float">🎉</div>
+    <div className="text-center py-10 flex flex-col items-center gap-6 animate-slide-up">
+      <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-zinc-900 border border-zinc-800 text-violet-400">
+        <CheckCircle2 size={32} />
       </div>
 
       <div>
-        <h2 className="font-display font-black text-3xl text-white mb-2">Nyawer Terkirim!</h2>
-        <p className="text-white/50 text-sm">
-          Kamu nyawer <strong className="text-purple-300">{formatRp(amount)}</strong> ke{' '}
-          <strong className="text-white">{streamer.display_name}</strong>. Menunggu konfirmasi pembayaran.
+        <h2 className="font-display font-bold text-xl text-zinc-100 mb-1.5">Nyawer Terkirim!</h2>
+        <p className="text-zinc-400 text-xs leading-relaxed max-w-sm">
+          Kamu mengirim <strong className="text-zinc-200">{formatRp(amount)}</strong> ke{' '}
+          <strong className="text-zinc-200">{streamer.display_name}</strong>. Menunggu konfirmasi pembayaran.
         </p>
       </div>
 
-      <div className="glass-card px-6 py-4 text-sm text-white/40 flex items-center gap-2">
-        <AlertCircle size={14} className="text-yellow-400 flex-shrink-0" />
-        Status donasi akan berubah ke <strong className="text-white ml-1">Sukses</strong> setelah pembayaran dikonfirmasi.
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg px-4 py-3 text-xs text-zinc-400 flex items-center gap-2 max-w-sm">
+        <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
+        <span>Status donasi akan berubah ke <strong className="text-zinc-200 font-semibold">Sukses</strong> setelah pembayaran dikonfirmasi.</span>
       </div>
 
-      <div className="flex gap-3 flex-wrap justify-center">
-        <button onClick={onReset} className="btn-glass px-6 py-3 rounded-xl text-sm font-semibold">
+      <div className="flex gap-2.5 flex-wrap justify-center w-full">
+        <button onClick={onReset} className="btn-glass px-5 py-2.5 text-xs font-semibold flex-1 sm:flex-initial">
           Nyawer Lagi
         </button>
-        <Link to="/" className="btn-neon px-6 py-3 rounded-xl text-sm font-bold">
+        <Link to="/" className="btn-neon px-5 py-2.5 text-xs font-semibold flex-1 sm:flex-initial text-center">
           <span>Kembali ke Beranda</span>
         </Link>
       </div>
@@ -136,7 +130,6 @@ export default function PayPage() {
     setLoading(true)
     try {
       if (isSupabaseReady && supabase) {
-        // Real Supabase insert: langsung status 'success' agar terpicu di OBS & dashboard
         const { error } = await supabase.from('donations').insert({
           streamer_id:  streamer.id,
           sender_name:  form.sender_name.trim() || 'Anonim',
@@ -147,7 +140,6 @@ export default function PayPage() {
         })
         if (error) throw error
       } else {
-        // Simulated — delay to mimic network
         await new Promise((r) => setTimeout(r, 1400))
       }
       setSuccess(true)
@@ -159,80 +151,72 @@ export default function PayPage() {
     }
   }
 
-  const INPUT = 'w-full bg-white/[0.04] border border-white/10 rounded-2xl px-4 py-4 text-white text-sm placeholder-white/25 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.06] transition-all'
+  const INPUT = 'w-full bg-zinc-900/60 border border-zinc-800 rounded-lg px-3.5 py-2.5 text-zinc-100 text-sm placeholder-zinc-500 focus:outline-none focus:border-violet-500 focus:bg-zinc-900 transition-colors'
+  const LABEL = 'block text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5'
 
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col items-center px-4 py-10 relative overflow-hidden">
-      {/* Background orb */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] pointer-events-none"
-        style={{ background: 'radial-gradient(circle at top, rgba(124,58,237,0.15) 0%, transparent 70%)' }} />
-      <div className="fixed inset-0 pointer-events-none opacity-20"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }} />
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center px-4 py-10 relative overflow-hidden">
+      {/* Background grid */}
+      <div className="absolute inset-0 pointer-events-none opacity-20 bg-grid" />
 
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-sm">
         {/* Back link */}
         <Link to="/"
-          className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8">
-          <ArrowLeft size={15} /> Kembali
+          className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-500 hover:text-zinc-300 transition-colors mb-6">
+          <ArrowLeft size={14} /> Kembali ke Beranda
         </Link>
 
         {profileLoading ? (
-          <div className="glass-card p-8 rounded-3xl text-center flex flex-col items-center gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin" />
-            <p className="text-white/40 text-xs">Memuat profil streamer...</p>
+          <div className="glass-card p-6 md:p-8 rounded-xl text-center flex flex-col items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-2 border-violet-500/20 border-t-violet-500 animate-spin" />
+            <p className="text-zinc-500 text-xs">Memuat profil streamer...</p>
           </div>
         ) : profileError || !streamer ? (
-          <div className="glass-card p-8 rounded-3xl text-center flex flex-col items-center gap-5">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center bg-red-500/10 border border-red-500/20 text-red-400">
-              <AlertCircle size={28} />
+          <div className="glass-card p-6 md:p-8 rounded-xl text-center flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-red-950/20 border border-red-800/30 text-red-400">
+              <AlertCircle size={24} />
             </div>
             <div>
-              <h2 className="font-display font-bold text-lg text-white mb-1">Streamer Tidak Ditemukan</h2>
-              <p className="text-white/40 text-xs">Username <strong className="text-purple-300">@{username}</strong> tidak terdaftar di sistem kami.</p>
+              <h2 className="font-display font-bold text-base text-zinc-100 mb-1">Streamer Tidak Ditemukan</h2>
+              <p className="text-zinc-500 text-xs">Username <strong className="text-zinc-300 font-semibold">@{username}</strong> tidak terdaftar di sistem kami.</p>
             </div>
-            <Link to="/" className="btn-neon px-6 py-2.5 rounded-xl text-xs font-bold w-full text-center">
-              <span className="relative z-10 flex justify-center w-full">Kembali ke Beranda</span>
+            <Link to="/" className="btn-neon px-4 py-2 text-xs font-semibold w-full text-center">
+              <span>Kembali ke Beranda</span>
             </Link>
           </div>
         ) : success ? (
-          <div className="glass-card p-8 rounded-3xl">
+          <div className="glass-card p-6 md:p-8 rounded-xl">
             <SuccessScreen streamer={streamer} amount={Number(form.amount)} onReset={() => { setSuccess(false); setForm({ sender_name: '', amount: '', message: '' }) }} />
           </div>
         ) : (
           <>
             {/* Streamer profile card */}
-            <div className="glass-card p-6 rounded-3xl mb-4 flex items-center gap-5">
-              <Avatar name={streamer.display_name} size={72} />
+            <div className="glass-card p-5 rounded-xl mb-4 flex items-center gap-4">
+              <Avatar name={streamer.display_name} size={56} />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="font-display font-black text-xl text-white truncate">{streamer.display_name}</h1>
-                  <span className="flex-shrink-0">
-                    <Zap size={14} className="text-purple-400" />
-                  </span>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <h1 className="font-display font-bold text-base text-zinc-100 truncate">{streamer.display_name}</h1>
+                  <Zap size={12} className="text-violet-400 fill-current" />
                 </div>
-                <p className="text-xs text-white/40 mb-2">nyawer.id/{streamer.username}</p>
+                <p className="text-[11px] text-zinc-500 mb-1.5">nyawer.id/{streamer.username}</p>
                 {streamer.bio && (
-                  <p className="text-xs text-white/55 leading-relaxed line-clamp-2">{streamer.bio}</p>
+                  <p className="text-xs text-zinc-400 leading-normal line-clamp-2">{streamer.bio}</p>
                 )}
-                <div className="mt-2 text-[11px] text-white/30 flex items-center gap-1">
-                  <Heart size={10} className="text-pink-400" />
-                  Min. donasi <strong className="text-white/50 ml-1">{formatRp(streamer.min_donation)}</strong>
+                <div className="mt-2 text-[10px] text-zinc-500 flex items-center gap-1">
+                  <Heart size={10} className="text-zinc-500" />
+                  <span>Min. donasi</span>
+                  <strong className="text-zinc-300 font-semibold">{formatRp(streamer.min_donation)}</strong>
                 </div>
               </div>
             </div>
 
             {/* Donation form */}
-            <form onSubmit={handleSubmit} className="glass-card p-6 rounded-3xl flex flex-col gap-5">
-              <h2 className="font-display font-bold text-lg text-white">Kirim Dukungan 💜</h2>
+            <form onSubmit={handleSubmit} className="glass-card p-5 rounded-xl flex flex-col gap-4">
+              <h2 className="font-display font-bold text-base text-zinc-100">Kirim Dukungan</h2>
 
               {/* Sender name */}
               <div>
-                <label className="block text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                  Nama Pengirim
-                </label>
+                <label className={LABEL}>Nama Pengirim</label>
                 <input id="pay-sender-name" type="text" value={form.sender_name} maxLength={50}
                   onChange={(e) => set('sender_name', e.target.value)}
                   placeholder="Namamu (kosongkan untuk Anonim)"
@@ -241,18 +225,16 @@ export default function PayPage() {
 
               {/* Amount presets */}
               <div>
-                <label className="block text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                  Nominal Donasi
-                </label>
-                <div className="grid grid-cols-4 gap-2 mb-3">
+                <label className={LABEL}>Nominal Donasi</label>
+                <div className="grid grid-cols-4 gap-1.5 mb-3">
                   {PRESETS.map((p) => (
                     <button key={p} type="button"
                       id={`pay-preset-${p}`}
                       onClick={() => set('amount', String(p))}
-                      className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+                      className={`py-2 rounded-lg text-xs font-semibold transition-all ${
                         Number(form.amount) === p
-                          ? 'bg-purple-500/25 border border-purple-400/50 text-purple-200'
-                          : 'glass-card border border-white/[0.06] text-white/40 hover:text-white hover:border-white/20'
+                          ? 'bg-violet-950/60 border border-violet-700/50 text-violet-300'
+                          : 'bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700/40'
                       }`}>
                       {p >= 1000 ? `${p / 1000}k` : p}
                     </button>
@@ -265,15 +247,15 @@ export default function PayPage() {
 
                 {/* Fee breakdown */}
                 {form.amount && Number(form.amount) >= 1000 && (
-                  <div className="mt-2.5 glass-card rounded-xl p-3 text-[12px] flex flex-col gap-1">
-                    <div className="flex justify-between text-white/40">
+                  <div className="mt-3 bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-xs flex flex-col gap-1.5">
+                    <div className="flex justify-between text-zinc-500">
                       <span>Nominal</span><span>{formatRp(Number(form.amount))}</span>
                     </div>
-                    <div className="flex justify-between text-white/40">
+                    <div className="flex justify-between text-zinc-500">
                       <span>Potongan Nyawer (4%)</span><span>- {formatRp(fee)}</span>
                     </div>
-                    <div className="divider-neon my-1" />
-                    <div className="flex justify-between font-bold text-purple-300">
+                    <div className="divider-neon my-0.5" />
+                    <div className="flex justify-between font-bold text-violet-400">
                       <span>Diterima Streamer</span>
                       <span>{formatRp(net)}</span>
                     </div>
@@ -283,40 +265,30 @@ export default function PayPage() {
 
               {/* Message */}
               <div>
-                <label className="block text-[11px] font-bold text-white/40 uppercase tracking-widest mb-2">
-                  Pesan Dukungan <span className="text-white/20 normal-case">(opsional, maks 300 karakter)</span>
-                </label>
+                <label className={LABEL}>Pesan Dukungan <span className="text-zinc-500 font-normal normal-case">(opsional)</span></label>
                 <textarea id="pay-message" value={form.message} maxLength={300} rows={3}
                   onChange={(e) => set('message', e.target.value)}
-                  placeholder="Tulis semangat, request lagu, atau apapun... 🎮"
+                  placeholder="Tulis pesan semangat untuk streamer..."
                   className={`${INPUT} resize-none`} />
-                <p className="text-[10px] text-white/20 mt-1">{form.message.length}/300</p>
+                <p className="text-[10px] text-zinc-500 mt-1">{form.message.length}/300</p>
               </div>
 
               {/* CTA button */}
               <button id="pay-submit" type="submit" disabled={loading}
-                className={`btn-neon w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 mt-1 ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}>
-                <span className="flex items-center gap-2 relative z-10">
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Memproses...
-                    </>
-                  ) : (
-                    <>
-                      <Heart size={16} className="fill-current" />
-                      Kirim via QRIS / E-Wallet
-                      <Zap size={16} />
-                    </>
-                  )}
-                </span>
+                className={`btn-neon w-full py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 mt-1 ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                {loading ? (
+                  <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                ) : (
+                  <Heart size={14} className="fill-current" />
+                )}
+                <span>{loading ? 'Memproses...' : 'Kirim Dukungan'}</span>
               </button>
 
-              <p className="text-center text-[11px] text-white/20">
-                🔒 Transaksi aman & terenkripsi. Powered by Nyawer.
+              <p className="text-center text-[10px] text-zinc-500">
+                🔒 Transaksi aman & terenkripsi. Didukung oleh Nyawer.
               </p>
             </form>
           </>

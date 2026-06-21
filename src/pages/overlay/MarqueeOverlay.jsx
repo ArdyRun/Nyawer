@@ -52,7 +52,6 @@ export default function MarqueeOverlay() {
       if (donationsRes.data) setDonations(donationsRes.data)
     } catch (err) {
       console.error('Error fetching marquee data:', err)
-      // Fallback
       setDonations(MOCK_DONATIONS.filter((d) => d.status === 'success' && !d.is_test).slice(0, 10))
       setUsername(MOCK_PROFILE.username)
     }
@@ -66,7 +65,6 @@ export default function MarqueeOverlay() {
 
   if (!donations.length) return null
 
-  /* Duplicate items untuk seamless infinite loop */
   const items = [...donations, ...donations, ...donations]
 
   return (
@@ -78,13 +76,13 @@ export default function MarqueeOverlay() {
       <div
         style={{
           width: '100%',
-          height: 52,
+          height: 44,
           display: 'flex',
           alignItems: 'center',
           overflow: 'hidden',
-          background: 'linear-gradient(90deg, rgba(7,3,17,0.96) 0%, rgba(7,3,17,0.88) 50%, rgba(7,3,17,0.96) 100%)',
-          borderTop: '1px solid rgba(168,85,247,0.25)',
-          backdropFilter: 'blur(12px)',
+          background: 'rgba(9,9,11,0.95)',
+          borderTop: '1px solid rgba(63, 63, 70, 0.4)',
+          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Label pill kiri */}
@@ -94,20 +92,22 @@ export default function MarqueeOverlay() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 6,
-          padding: '0 20px',
+          padding: '0 16px',
           height: '100%',
-          background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-          minWidth: 130,
+          background: '#7c3aed',
+          minWidth: 110,
           zIndex: 2,
         }}>
-          <span style={{ fontSize: 14 }}>💜</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#ffffff' }}>
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+          </svg>
           <span style={{
             color: 'white',
-            fontSize: 10,
-            fontFamily: 'Outfit, sans-serif',
-            fontWeight: 800,
+            fontSize: 9,
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 700,
             textTransform: 'uppercase',
-            letterSpacing: '0.15em',
+            letterSpacing: '0.1em',
           }}>
             Nyawer
           </span>
@@ -118,12 +118,12 @@ export default function MarqueeOverlay() {
           {/* Left fade */}
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0, width: 40, zIndex: 1,
-            background: 'linear-gradient(90deg, rgba(7,3,17,0.95), transparent)',
+            background: 'linear-gradient(90deg, rgba(9,9,11,0.95), transparent)',
           }} />
           {/* Right fade */}
           <div style={{
             position: 'absolute', right: 0, top: 0, bottom: 0, width: 40, zIndex: 1,
-            background: 'linear-gradient(-90deg, rgba(7,3,17,0.95), transparent)',
+            background: 'linear-gradient(-90deg, rgba(9,9,11,0.95), transparent)',
           }} />
 
           {/* Marquee text */}
@@ -131,15 +131,15 @@ export default function MarqueeOverlay() {
             display: 'inline-flex',
             alignItems: 'center',
             whiteSpace: 'nowrap',
-            animation: 'marquee 50s linear infinite',
+            animation: 'marquee-overlay 50s linear infinite',
           }}>
             {items.map((d, i) => (
               <span key={`${d.id}-${i}`} style={{ display: 'inline-flex', alignItems: 'center' }}>
                 {/* Donor name */}
                 <span style={{
-                  color: 'rgba(255,255,255,0.9)',
-                  fontWeight: 700,
-                  fontSize: 14,
+                  color: '#e4e4e7',
+                  fontWeight: 600,
+                  fontSize: 13,
                   padding: '0 4px',
                   fontFamily: 'Inter, sans-serif',
                 }}>
@@ -147,25 +147,22 @@ export default function MarqueeOverlay() {
                 </span>
                 {/* Amount */}
                 <span style={{
-                  fontWeight: 900,
-                  fontSize: 14,
+                  fontWeight: 800,
+                  fontSize: 13,
                   fontFamily: 'Outfit, sans-serif',
-                  background: 'linear-gradient(135deg, #a855f7, #22d3ee)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  color: '#a78bfa',
                   padding: '0 4px',
                 }}>
                   {formatRp(d.amount)}
                 </span>
                 {/* Message */}
                 {d.message && (
-                  <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, padding: '0 4px' }}>
+                  <span style={{ color: '#71717a', fontSize: 12, padding: '0 4px' }}>
                     "{truncate(d.message, 50)}"
                   </span>
                 )}
                 {/* Separator */}
-                <span style={{ color: 'rgba(168,85,247,0.4)', fontSize: 16, margin: '0 20px' }}>✦</span>
+                <span style={{ color: 'rgba(63,63,70,0.6)', fontSize: 14, margin: '0 16px' }}>✦</span>
               </span>
             ))}
           </div>
