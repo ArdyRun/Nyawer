@@ -266,9 +266,9 @@ function HeroSection() {
             <img
               src="/mascot-wave.png"
               alt="Mascot Wave"
-              className="w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80 object-contain relative z-10 transition-transform duration-500 hover:scale-105"
+              className="w-64 h-64 sm:w-96 sm:h-96 lg:w-[420px] lg:h-[420px] object-contain relative z-10 transition-transform duration-500 hover:scale-105"
               style={{
-                filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.5))'
+                filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.55))'
               }}
             />
           </div>
