@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.withdrawals (
     bank_name TEXT NOT NULL,
     bank_account TEXT NOT NULL,
     bank_holder TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'rejected')),
+    status TEXT NOT NULL DEFAULT 'completed' CHECK (status IN ('completed', 'rejected')),
     notes TEXT DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -93,7 +93,7 @@ BEGIN
 
     SELECT COALESCE(SUM(amount), 0) INTO v_pending
     FROM public.withdrawals
-    WHERE streamer_id = v_user_id AND status IN ('pending', 'processing');
+    WHERE streamer_id = v_user_id AND status = 'completed';
 
     v_balance := v_balance - v_pending;
 
@@ -101,9 +101,9 @@ BEGIN
         RETURN json_build_object('success', false, 'message', 'Saldo tidak mencukupi. Saldo tersedia: ' || v_balance || '.');
     END IF;
 
-    -- Insert withdrawal
-    INSERT INTO public.withdrawals (streamer_id, amount, bank_name, bank_account, bank_holder)
-    VALUES (v_user_id, p_amount, TRIM(p_bank_name), TRIM(p_bank_account), TRIM(p_bank_holder));
+    -- Insert withdrawal (instant, langsung completed)
+    INSERT INTO public.withdrawals (streamer_id, amount, bank_name, bank_account, bank_holder, status)
+    VALUES (v_user_id, p_amount, TRIM(p_bank_name), TRIM(p_bank_account), TRIM(p_bank_holder), 'completed');
 
     RETURN json_build_object('success', true, 'message', 'Penarikan berhasil diajukan.');
 END;
@@ -160,10 +160,10 @@ BEGIN
     FROM public.donations
     WHERE streamer_id = v_user_id AND status = 'success' AND (is_test IS NULL OR is_test = false);
 
-    -- Total pending + processing withdrawals
+    -- Total withdrawals (all completed, instant)
     SELECT COALESCE(SUM(amount), 0) INTO v_withdrawn
     FROM public.withdrawals
-    WHERE streamer_id = v_user_id AND status IN ('pending', 'processing');
+    WHERE streamer_id = v_user_id AND status = 'completed';
 
     RETURN json_build_object(
         'success', true,

@@ -1347,12 +1347,6 @@ function GoalTargetSection({ profile, sessionToken, onProfileUpdate }) {
    WITHDRAWAL TAB
 ════════════════════════════════════════════════════════════ */
 const BANKS = ['BCA', 'Mandiri', 'BRI', 'BNI', 'DANA', 'GoPay', 'OVO']
-const WITHDRAWAL_STATUSES = {
-  pending:    { label: 'Pending',    color: 'text-amber-400 bg-amber-950/20 border-amber-800/30' },
-  processing: { label: 'Diproses',   color: 'text-blue-400 bg-blue-950/20 border-blue-800/30' },
-  completed:  { label: 'Selesai',    color: 'text-emerald-400 bg-emerald-950/20 border-emerald-800/30' },
-  rejected:   { label: 'Ditolak',    color: 'text-red-400 bg-red-950/20 border-red-800/30' },
-}
 
 function WithdrawalTab({ profile, donations, sessionToken }) {
   const [form, setForm] = useState({ amount: '', bank_name: '', bank_account: '', bank_holder: '' })
@@ -1365,9 +1359,9 @@ function WithdrawalTab({ profile, donations, sessionToken }) {
   // Hitung saldo dari data donasi yang sudah di-load
   const successDonations = donations.filter((d) => d.status === 'success' && !d.is_test)
   const totalReceived = successDonations.reduce((s, d) => s + (d.amount_received ?? Math.floor(d.amount * 0.96)), 0)
-  const pendingWithdrawn = withdrawals.filter((w) => w.status === 'pending' || w.status === 'processing')
+  const totalWithdrawn = withdrawals.filter((w) => w.status === 'completed')
     .reduce((s, w) => s + w.amount, 0)
-  const availableBalance = totalReceived - pendingWithdrawn
+  const availableBalance = totalReceived - totalWithdrawn
 
   // Load withdrawals
   useEffect(() => {
@@ -1425,7 +1419,7 @@ function WithdrawalTab({ profile, donations, sessionToken }) {
           bank_name: form.bank_name,
           bank_account: form.bank_account.trim(),
           bank_holder: form.bank_holder.trim(),
-          status: 'pending',
+          status: 'completed',
           notes: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -1453,7 +1447,7 @@ function WithdrawalTab({ profile, donations, sessionToken }) {
         <p className={LABEL}>Saldo Tersedia</p>
         <p className="font-display font-bold text-3xl text-zinc-100 mb-1">{formatRp(availableBalance)}</p>
         <p className="text-[10px] text-zinc-500">
-          Dari {formatRp(totalReceived)} diterima{pendingWithdrawn > 0 ? ` · ${formatRp(pendingWithdrawn)} dalam proses penarikan` : ''}
+          Dari {formatRp(totalReceived)} diterima{totalWithdrawn > 0 ? ` · ${formatRp(totalWithdrawn)} sudah ditarik` : ''}
         </p>
       </div>
 
@@ -1543,29 +1537,21 @@ function WithdrawalTab({ profile, donations, sessionToken }) {
             <table className="w-full min-w-[580px]">
               <thead>
                 <tr className="border-b border-zinc-800/40 bg-zinc-900/20">
-                  {['Tanggal', 'Nominal', 'Bank', 'Rekening', 'Atas Nama', 'Status'].map((h) => (
+                  {['Tanggal', 'Nominal', 'Bank', 'Rekening', 'Atas Nama'].map((h) => (
                     <th key={h} className="px-5 py-2.5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-900/30">
-                {withdrawals.map((w) => {
-                  const st = WITHDRAWAL_STATUSES[w.status] || WITHDRAWAL_STATUSES.pending
-                  return (
+                {withdrawals.map((w) => (
                     <tr key={w.id} className="hover:bg-zinc-900/20 transition-colors">
                       <td className="px-5 py-3 text-[10px] text-zinc-400 whitespace-nowrap">{formatDateShort(w.created_at)}</td>
                       <td className="px-5 py-3 text-xs text-zinc-100 font-semibold">{formatRp(w.amount)}</td>
                       <td className="px-5 py-3 text-xs text-zinc-300">{w.bank_name}</td>
                       <td className="px-5 py-3 text-xs text-zinc-400 font-mono">{w.bank_account}</td>
                       <td className="px-5 py-3 text-xs text-zinc-400">{w.bank_holder}</td>
-                      <td className="px-5 py-3">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
-                          {st.label}
-                        </span>
-                      </td>
                     </tr>
-                  )
-                })}
+                ))}
               </tbody>
             </table>
           </div>
