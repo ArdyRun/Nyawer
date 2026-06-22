@@ -12,6 +12,9 @@ const DEMO_PROFILE = {
   display_name: 'Demo Streamer',
   min_donation: 10000,
   bio: 'Main game seru-seruan bareng viewer! Jangan lupa pencet tombol nyawer.',
+  cost_per_second: 200,
+  media_max_duration: 30,
+  alert_duration: 8,
 }
 
 const AuthContext = createContext(null)

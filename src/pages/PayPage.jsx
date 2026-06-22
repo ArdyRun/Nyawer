@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Zap, Heart, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Zap, Heart, AlertCircle, CheckCircle2, Video, Clock } from 'lucide-react'
 import { supabase, isSupabaseReady } from '../lib/supabase'
 import { useToast } from '../hooks/useToast'
 import Toast from '../components/ui/Toast'
@@ -10,6 +10,31 @@ import { formatRp } from '../lib/utils'
 
 /* ── Nominal presets ────────────────────────────────────────── */
 const PRESETS = [10000, 25000, 50000, 100000]
+
+/* ── Video URL validation ────────────────────────────────────── */
+function isValidMediaUrl(url) {
+  if (!url) return false
+  try {
+    const u = new URL(url)
+    const h = u.hostname.toLowerCase()
+    return (
+      h.includes('youtube.com') || h.includes('youtu.be') || h.includes('tiktok.com')
+    )
+  } catch {
+    return false
+  }
+}
+
+function getVideoPlatform(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const h = u.hostname.toLowerCase()
+    if (h.includes('youtube.com') || h.includes('youtu.be')) return 'youtube'
+    if (h.includes('tiktok.com')) return 'tiktok'
+  } catch {}
+  return null
+}
 
 /* ── Success screen ─────────────────────────────────────────── */
 function SuccessScreen({ streamer, amount, onReset }) {
@@ -54,9 +79,20 @@ export default function PayPage() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileError, setProfileError] = useState(false)
   const [form, setForm]     = useState({ sender_name: '', amount: '', message: '' })
+  const [mediaUrl, setMediaUrl] = useState('')
+  const [mediaDuration, setMediaDuration] = useState(10)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
+
+  const costPerSecond = streamer?.cost_per_second ?? 0
+  const maxDuration = streamer?.media_max_duration ?? 30
+  const showMedia = costPerSecond > 0
+
+  const mediaCost = useMemo(() => {
+    if (!showMedia || !mediaUrl || !isValidMediaUrl(mediaUrl)) return 0
+    return costPerSecond * mediaDuration
+  }, [showMedia, mediaUrl, costPerSecond, mediaDuration])
 
   useEffect(() => {
     if (!username) {
@@ -112,17 +148,31 @@ export default function PayPage() {
       return
     }
 
+    // Validate media cost
+    if (showMedia && mediaUrl && mediaCost > 0 && amount < mediaCost) {
+      addToast({ message: `Minimum donasi ${formatRp(mediaCost)} untuk lampirkan video.`, type: 'error' })
+      return
+    }
+
     setLoading(true)
     try {
+      const donationData = {
+        streamer_id:  streamer.id,
+        sender_name:  form.sender_name.trim() || 'Anonim',
+        amount,
+        message:      form.message.trim(),
+        status:       'success',
+        is_test:      false,
+      }
+
+      // Add media fields if valid
+      if (showMedia && mediaUrl && isValidMediaUrl(mediaUrl)) {
+        donationData.media_url = mediaUrl.trim()
+        donationData.media_duration = mediaDuration
+      }
+
       if (isSupabaseReady && supabase) {
-        const { error } = await supabase.from('donations').insert({
-          streamer_id:  streamer.id,
-          sender_name:  form.sender_name.trim() || 'Anonim',
-          amount,
-          message:      form.message.trim(),
-          status:       'success',
-          is_test:      false,
-        })
+        const { error } = await supabase.from('donations').insert(donationData)
         if (error) throw error
       } else {
         await new Promise((r) => setTimeout(r, 1400))
@@ -255,6 +305,61 @@ export default function PayPage() {
                   className={`${INPUT} resize-none`} />
                 <p className="text-[10px] text-zinc-500 mt-1">{form.message.length}/300</p>
               </div>
+
+              {/* ── Media Clip Section ────────────────────── */}
+              {showMedia && (
+                <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-lg p-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <Video size={14} className="text-violet-400" />
+                    <label className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider">Lampirkan Video</label>
+                  </div>
+                  <p className="text-[10px] text-zinc-500 -mt-1">Paste link YouTube atau TikTok. Video akan muncul di alert overlay.</p>
+
+                  <div>
+                    <input id="pay-media-url" type="url" value={mediaUrl}
+                      onChange={(e) => setMediaUrl(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=... atau tiktok.com/..."
+                      className={`${INPUT} text-[11px]`} />
+                    {mediaUrl && !isValidMediaUrl(mediaUrl) && (
+                      <p className="text-[10px] text-red-400 mt-1">Link tidak valid. Gunakan YouTube atau TikTok.</p>
+                    )}
+                    {mediaUrl && isValidMediaUrl(mediaUrl) && (
+                      <p className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                        <CheckCircle2 size={10} /> {getVideoPlatform(mediaUrl) === 'youtube' ? 'YouTube' : 'TikTok'} terdeteksi
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Duration picker */}
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Clock size={10} /> Durasi Clip
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input type="range" id="pay-media-duration" min={1} max={maxDuration} value={mediaDuration}
+                        onChange={(e) => setMediaDuration(Number(e.target.value))}
+                        className="flex-1 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-violet-500" />
+                      <span className="text-xs font-mono text-zinc-300 w-10 text-right">{mediaDuration}s</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-600 mt-1">Maks: {maxDuration} detik</p>
+                  </div>
+
+                  {/* Media cost info */}
+                  {mediaCost > 0 && (
+                    <div className="flex justify-between text-[10px] items-center">
+                      <span className="text-zinc-500">Biaya video ({formatRp(costPerSecond)} × {mediaDuration}s)</span>
+                      <span className={`font-semibold ${Number(form.amount) >= mediaCost ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {formatRp(mediaCost)}
+                      </span>
+                    </div>
+                  )}
+                  {mediaCost > 0 && Number(form.amount) > 0 && Number(form.amount) < mediaCost && (
+                    <p className="text-[10px] text-amber-400">
+                      Donasi minimal {formatRp(mediaCost)} untuk lampirkan video ini.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* CTA button */}
               <button id="pay-submit" type="submit" disabled={loading}

@@ -6,6 +6,9 @@ export const MOCK_PROFILE = {
   bio: 'Streamer FPS kompetitif. Main VALORANT & CS2 setiap malam jam 8! GG EZ no re.',
   min_donation: 10000,
   avatar_url: null,
+  cost_per_second: 200,
+  media_max_duration: 30,
+  alert_duration: 8,
 }
 
 const now = Date.now()

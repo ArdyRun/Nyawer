@@ -16,7 +16,50 @@ import { useTTS } from '../../hooks/useTTS'
 import { MOCK_PROFILE } from '../../lib/mockData'
 import { formatRp, truncate } from '../../lib/utils'
 
-const ALERT_MS = 8000
+const DEFAULT_ALERT_MS = 8000
+
+/* ── Extract video ID from YouTube/TikTok URL ────────────── */
+function extractYouTubeId(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    // youtube.com/watch?v=ID
+    if (u.searchParams.get('v')) return u.searchParams.get('v')
+    // youtu.be/ID
+    if (u.hostname === 'youtu.be') return u.pathname.slice(1).split('/')[0]
+    // youtube.com/shorts/ID
+    const shortsMatch = u.pathname.match(/\/shorts\/([^/?]+)/)
+    if (shortsMatch) return shortsMatch[1]
+    // youtube.com/embed/ID
+    const embedMatch = u.pathname.match(/\/embed\/([^/?]+)/)
+    if (embedMatch) return embedMatch[1]
+  } catch {}
+  return null
+}
+
+function extractTiktokId(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    // tiktok.com/@user/video/ID
+    const videoMatch = u.pathname.match(/\/video\/(\d+)/)
+    if (videoMatch) return videoMatch[1]
+    // vm.tiktok.com/CODE — need to follow redirect, use code as ID
+    if (u.hostname === 'vm.tiktok.com') return u.pathname.slice(1).split('/')[0]
+  } catch {}
+  return null
+}
+
+function getVideoPlatform(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const h = u.hostname.toLowerCase()
+    if (h.includes('youtube.com') || h.includes('youtu.be')) return 'youtube'
+    if (h.includes('tiktok.com')) return 'tiktok'
+  } catch {}
+  return null
+}
 
 /* ── Peta Tema Lengkap DaisyUI (Konversi dari OKLCH ke HEX) ─── */
 const THEMES = {
@@ -282,24 +325,51 @@ function isThemeLight(hexColor) {
 /* ────────────────────────────────────────────────────────────
    Alert Popup Component (Premium, Handcrafted, Restrained Visuals)
 ──────────────────────────────────────────────────────────── */
-function AlertPopup({ alert, onDismiss, themeConfig }) {
+function AlertPopup({ alert, onDismiss, themeConfig, alertMs }) {
   const [progress, setProgress] = useState(100)
   const [leaving, setLeaving]   = useState(false)
+  const onDismissRef = useRef(onDismiss)
+  const dismissedRef = useRef(false)
+  onDismissRef.current = onDismiss
 
+  // Video embed logic
+  const mediaUrl = alert?.media_url
+  const mediaDuration = alert?.media_duration || 15
+  const platform = getVideoPlatform(mediaUrl)
+  const youtubeId = platform === 'youtube' ? extractYouTubeId(mediaUrl) : null
+  const tiktokId = platform === 'tiktok' ? extractTiktokId(mediaUrl) : null
+
+  // Durasi efektif: video → media_duration, tanpa video → alertMs
+  const mediaMs = youtubeId || tiktokId ? mediaDuration * 1000 : 0
+  const effectiveMs = Math.max(alertMs, mediaMs)
+
+  // Trigger dismiss (anti-double-fire)
+  const triggerDismiss = useCallback(() => {
+    if (dismissedRef.current) return
+    dismissedRef.current = true
+    setLeaving(true)
+    setTimeout(onDismissRef.current, 380)
+  }, [])
+
+  // Reset dismissedRef saat alert baru
+  useEffect(() => {
+    if (alert) dismissedRef.current = false
+  }, [alert])
+
+  // Progress bar timer (fallback untuk non-YouTube dan safety net)
   useEffect(() => {
     if (!alert) return
     setProgress(100)
     setLeaving(false)
 
     const step = 50
-    const dec  = (step / ALERT_MS) * 100
+    const dec  = (step / effectiveMs) * 100
     const interval = setInterval(() => {
       setProgress((p) => {
         const next = p - dec
         if (next <= 0) {
           clearInterval(interval)
-          setLeaving(true)
-          setTimeout(onDismiss, 380)
+          triggerDismiss()
           return 0
         }
         return next
@@ -307,7 +377,59 @@ function AlertPopup({ alert, onDismiss, themeConfig }) {
     }, step)
 
     return () => clearInterval(interval)
-  }, [alert, onDismiss])
+  }, [alert, triggerDismiss, effectiveMs])
+
+  // YouTube IFrame API — detect video END → dismiss langsung
+  useEffect(() => {
+    if (!alert || !youtubeId) return
+
+    // Load YouTube IFrame API
+    if (!window.YT) {
+      const tag = document.createElement('script')
+      tag.src = 'https://www.youtube.com/iframe_api'
+      document.head.appendChild(tag)
+    }
+
+    let player = null
+    let pollCount = 0
+    const maxPolls = 50 // max 5 detik polling
+
+    const createPlayer = () => {
+      if (!window.YT || !window.YT.Player) {
+        if (pollCount < maxPolls) {
+          pollCount++
+          setTimeout(createPlayer, 100)
+        }
+        return
+      }
+      try {
+        player = new window.YT.Player(`yt-player-${alert.id}`, {
+          playerVars: {
+            controls: 0,
+            showinfo: 0,
+            iv_load_policy: 3,
+            modestbranding: 1,
+            rel: 0,
+            disablekb: 1,
+            fs: 0,
+            cc_load_policy: 0,
+          },
+          events: {
+            onStateChange: (e) => {
+              // YT.PlayerState.ENDED = 0
+              if (e.data === 0) triggerDismiss()
+            },
+          },
+        })
+      } catch {}
+    }
+
+    setTimeout(createPlayer, 500)
+
+    return () => {
+      try { player?.destroy?.() } catch {}
+    }
+  }, [alert, youtubeId, triggerDismiss])
 
   if (!alert) return null
 
@@ -378,6 +500,33 @@ function AlertPopup({ alert, onDismiss, themeConfig }) {
               "{truncate(alert.message, 150)}"
             </div>
           )}
+
+          {/* Video Clip Embed */}
+          {youtubeId && (
+            <div style={{ borderRadius: 6, overflow: 'hidden', border: `1px solid ${themeConfig.border}`, position: 'relative' }}>
+              <iframe
+                id={`yt-player-${alert.id}`}
+                width="100%"
+                height="200"
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=0&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&disablekb=1&origin=${encodeURIComponent(window.location.origin)}`}
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+                style={{ border: 'none', display: 'block' }}
+              />
+            </div>
+          )}
+          {tiktokId && (
+            <div style={{ borderRadius: 6, overflow: 'hidden', border: `1px solid ${themeConfig.border}` }}>
+              <iframe
+                width="100%"
+                height="200"
+                src={`https://www.tiktok.com/embed/v2/${tiktokId}?autoplay=1`}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                style={{ border: 'none', display: 'block' }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Bottom Progress Bar */}
@@ -415,6 +564,10 @@ export default function AlertOverlay() {
   // Ambil tema dari URL parameter
   const themeParam = searchParams.get('theme') || 'default'
   const themeConfig = THEMES[themeParam] || THEMES.default
+
+  // Ambil alert_duration dari URL parameter (default 8 detik)
+  const alertDurationSec = Math.max(3, Math.min(30, Number(searchParams.get('alert_duration')) || 8))
+  const alertMs = alertDurationSec * 1000
 
   /* Transparent background */
   useEffect(() => {
@@ -499,7 +652,7 @@ export default function AlertOverlay() {
   const triggerDemo = () => {
     const demos = [
       { id: Date.now(), sender_name: 'BudiGaming', amount: 50000, message: 'Ayo win bro! Gas terus!', is_test: true },
-      { id: Date.now(), sender_name: 'SitiStream', amount: 100000, message: 'Sultan hadir! Jangan kalah!', is_test: true },
+      { id: Date.now(), sender_name: 'SitiStream', amount: 100000, message: 'Sultan hadir! Jangan kalah!', is_test: true, media_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', media_duration: 10 },
       { id: Date.now(), sender_name: 'Anonim', amount: 25000, message: '', is_test: true },
     ]
     handleNewDonation(demos[Math.floor(Math.random() * demos.length)])
@@ -515,7 +668,7 @@ export default function AlertOverlay() {
         overflow: 'hidden',
       }}
     >
-      <AlertPopup alert={alert} onDismiss={handleDismiss} themeConfig={themeConfig} />
+      <AlertPopup alert={alert} onDismiss={handleDismiss} themeConfig={themeConfig} alertMs={alertMs} />
 
       {/* Demo button */}
       {!isSupabaseReady && (

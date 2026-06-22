@@ -237,11 +237,14 @@ function StatsTab({ profile, donations, onRefresh }) {
 ════════════════════════════════════════════════════════════ */
 function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
   const [form, setForm] = useState({
-    display_name: profile.display_name,
-    username:     profile.username,
-    bio:          profile.bio ?? '',
-    min_donation: profile.min_donation,
-    avatar_url:   profile.avatar_url ?? '',
+    display_name:     profile.display_name,
+    username:         profile.username,
+    bio:              profile.bio ?? '',
+    min_donation:     profile.min_donation,
+    avatar_url:       profile.avatar_url ?? '',
+    cost_per_second:  profile.cost_per_second ?? 0,
+    media_max_duration: profile.media_max_duration ?? 30,
+    alert_duration:   profile.alert_duration ?? 8,
   })
   const [saving, setSaving] = useState(false)
   const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken'
@@ -359,6 +362,9 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
           p_bio: form.bio,
           p_min_donation: Number(form.min_donation),
           p_avatar_url: form.avatar_url || null,
+          p_cost_per_second: Number(form.cost_per_second),
+          p_media_max_duration: Number(form.media_max_duration),
+          p_alert_duration: Number(form.alert_duration),
         })
         if (error) throw error
         if (data && !data.success) {
@@ -488,6 +494,67 @@ function SettingsTab({ profile, onProfileUpdate, sessionToken }) {
           </div>
           <input id="setting-min-donation" type="number" value={form.min_donation} min={1000} step={1000}
             onChange={(e) => set('min_donation', Math.max(1000, Number(e.target.value)))} className={INPUT} />
+        </div>
+
+        <div className="divider-neon" />
+
+        {/* ── Media & Alert Settings ──────────────────────── */}
+        <div>
+          <h3 className="font-display font-bold text-sm text-zinc-100 mb-0.5">Media & Alert</h3>
+          <p className="text-[10px] text-zinc-500 mb-3">Atur video clip dan alert overlay untuk donasi.</p>
+
+          <div className="flex flex-col gap-4">
+            {/* Biaya per detik */}
+            <div>
+              <label className={LABEL}>Biaya per Detik (Rp/detik)</label>
+              <p className="text-[10px] text-zinc-600 mb-1.5">0 = fitur video clip nonaktif</p>
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {[100, 200, 500, 1000].map((v) => (
+                  <button key={v} type="button" onClick={() => set('cost_per_second', v)}
+                    className={`flex-1 min-w-[60px] py-1.5 rounded-lg text-xs font-semibold transition-all ${form.cost_per_second === v ? 'bg-violet-950/60 border border-violet-700/50 text-violet-300' : 'bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300'}`}>
+                    Rp {v}
+                  </button>
+                ))}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">Rp</span>
+                <input id="setting-cost-per-second" type="number" value={form.cost_per_second} min={0} step={50}
+                  onChange={(e) => set('cost_per_second', Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+              </div>
+            </div>
+
+            {/* Durasi maks clip */}
+            <div>
+              <label className={LABEL}>Durasi Maks Video Clip (detik)</label>
+              <div className="relative">
+                <input id="setting-media-max-duration" type="number" value={form.media_max_duration} min={5} max={120} step={1}
+                  onChange={(e) => set('media_max_duration', Math.min(120, Math.max(5, Number(e.target.value))))}
+                  className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500">detik</span>
+              </div>
+            </div>
+
+            {/* Durasi alert overlay */}
+            <div>
+              <label className={LABEL}>Durasi Alert Overlay (detik)</label>
+              <div className="relative">
+                <input id="setting-alert-duration" type="number" value={form.alert_duration} min={3} max={30} step={1}
+                  onChange={(e) => set('alert_duration', Math.min(30, Math.max(3, Number(e.target.value))))}
+                  className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500">detik</span>
+              </div>
+            </div>
+
+            {/* Info perhitungan */}
+            {form.cost_per_second > 0 && (
+              <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-lg px-3 py-2.5 text-[10px] text-zinc-500">
+                Contoh: <strong className="text-zinc-400">{formatRp(form.cost_per_second)}</strong> ×{' '}
+                <strong className="text-zinc-400">{form.media_max_duration} detik</strong> ={' '}
+                <strong className="text-violet-400">{formatRp(form.cost_per_second * form.media_max_duration)}</strong> minimum untuk lampirkan video.
+              </div>
+            )}
+          </div>
         </div>
 
         <button id="setting-submit" type="submit" disabled={saving}
@@ -750,7 +817,7 @@ function OverlayTab({ profile, user, sessionToken, onProfileUpdate }) {
       id: 'alert',
       icon: Bell,
       label: 'Alert URL',
-      url: `${base}/overlay/alert/${profile.id}?theme=${selectedTheme}`,
+      url: `${base}/overlay/alert/${profile.id}?theme=${selectedTheme}&alert_duration=${profile.alert_duration ?? 8}`,
       desc: 'Popup donasi real-time. Ukuran: 1920×1080.',
     },
     {
@@ -953,7 +1020,7 @@ function OverlayTab({ profile, user, sessionToken, onProfileUpdate }) {
             </h3>
             <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
               Klik tombol untuk mengirim donasi uji coba (Rp 50.000) ke halaman{' '}
-              <a href={`${window.location.origin}/overlay/alert/${profile.id}?theme=${selectedTheme}`} target="_blank" rel="noopener noreferrer"
+              <a href={`${window.location.origin}/overlay/alert/${profile.id}?theme=${selectedTheme}&alert_duration=${profile.alert_duration ?? 8}`} target="_blank" rel="noopener noreferrer"
                 className="text-violet-400 hover:text-violet-300 underline underline-offset-2">
                 Alert Overlay
               </a>.
