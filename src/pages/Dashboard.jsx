@@ -4,7 +4,7 @@ import {
   Zap, BarChart3, Settings, Copy, ExternalLink, RefreshCw,
   TrendingUp, Users, DollarSign, Monitor, LogOut, Play, CheckCircle2,
   Bell, FileText, Smartphone, HelpCircle, AlertTriangle, Check, X, Loader2,
-  Trophy, Target, Sparkles, Wallet
+  Trophy, Target, Sparkles, Banknote
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
@@ -1506,7 +1506,7 @@ function WithdrawalTab({ profile, donations, sessionToken }) {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : (
-            <Wallet size={14} />
+            <Banknote size={14} />
           )}
           <span>{saving ? 'Mengajukan...' : 'Ajukan Penarikan'}</span>
         </button>
@@ -1569,9 +1569,9 @@ function WithdrawalTab({ profile, donations, sessionToken }) {
 ════════════════════════════════════════════════════════════ */
 const TABS = [
   { id: 'stats',      label: 'Statistik',           icon: BarChart3 },
+  { id: 'withdrawal', label: 'Penarikan',           icon: Banknote  },
   { id: 'settings',   label: 'Pengaturan Profil',   icon: Settings  },
   { id: 'overlay',    label: 'Overlay & Uji Coba',  icon: Monitor   },
-  { id: 'withdrawal', label: 'Penarikan',           icon: Wallet    },
 ]
 
 export default function Dashboard() {
