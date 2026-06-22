@@ -4,7 +4,7 @@ import {
   Zap, BarChart3, Settings, Copy, ExternalLink, RefreshCw,
   TrendingUp, Users, DollarSign, Monitor, LogOut, Play, CheckCircle2,
   Bell, FileText, Smartphone, HelpCircle, AlertTriangle, Check, X, Loader2,
-  Trophy, Target, Sparkles
+  Trophy, Target, Sparkles, Wallet
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
@@ -12,7 +12,7 @@ import Toast from '../components/ui/Toast'
 import Avatar from '../components/ui/Avatar'
 import StatusBadge from '../components/ui/StatusBadge'
 import { supabase, isSupabaseReady } from '../lib/supabase'
-import { MOCK_PROFILE, MOCK_DONATIONS } from '../lib/mockData'
+import { MOCK_PROFILE, MOCK_DONATIONS, MOCK_WITHDRAWALS } from '../lib/mockData'
 import { formatRp, formatDate, formatDateShort } from '../lib/utils'
 
 /* ── Shared styles (Refined Shape and Color Locks) ─────────── */
@@ -1344,12 +1344,248 @@ function GoalTargetSection({ profile, sessionToken, onProfileUpdate }) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   WITHDRAWAL TAB
+════════════════════════════════════════════════════════════ */
+const BANKS = ['BCA', 'Mandiri', 'BRI', 'BNI', 'DANA', 'GoPay', 'OVO']
+const WITHDRAWAL_STATUSES = {
+  pending:    { label: 'Pending',    color: 'text-amber-400 bg-amber-950/20 border-amber-800/30' },
+  processing: { label: 'Diproses',   color: 'text-blue-400 bg-blue-950/20 border-blue-800/30' },
+  completed:  { label: 'Selesai',    color: 'text-emerald-400 bg-emerald-950/20 border-emerald-800/30' },
+  rejected:   { label: 'Ditolak',    color: 'text-red-400 bg-red-950/20 border-red-800/30' },
+}
+
+function WithdrawalTab({ profile, donations, sessionToken }) {
+  const [form, setForm] = useState({ amount: '', bank_name: '', bank_account: '', bank_holder: '' })
+  const [saving, setSaving] = useState(false)
+  const [withdrawals, setWithdrawals] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { toasts, addToast, removeToast } = useToast()
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  // Hitung saldo dari data donasi yang sudah di-load
+  const successDonations = donations.filter((d) => d.status === 'success' && !d.is_test)
+  const totalReceived = successDonations.reduce((s, d) => s + (d.amount_received ?? Math.floor(d.amount * 0.96)), 0)
+  const pendingWithdrawn = withdrawals.filter((w) => w.status === 'pending' || w.status === 'processing')
+    .reduce((s, w) => s + w.amount, 0)
+  const availableBalance = totalReceived - pendingWithdrawn
+
+  // Load withdrawals
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (isSupabaseReady && supabase) {
+          const { data, error } = await supabase.rpc('get_my_withdrawals', { p_session_token: sessionToken })
+          if (error) throw error
+          if (data?.success) setWithdrawals(data.withdrawals || [])
+        } else {
+          setWithdrawals(MOCK_WITHDRAWALS)
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [sessionToken])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const amount = Number(form.amount)
+
+    if (amount < 50000) {
+      addToast({ message: 'Minimal penarikan Rp 50.000.', type: 'error' }); return
+    }
+    if (amount > availableBalance) {
+      addToast({ message: 'Saldo tidak mencukupi.', type: 'error' }); return
+    }
+    if (!form.bank_name || !form.bank_account.trim() || !form.bank_holder.trim()) {
+      addToast({ message: 'Data bank harus diisi lengkap.', type: 'error' }); return
+    }
+
+    setSaving(true)
+    try {
+      if (isSupabaseReady && supabase) {
+        const { data, error } = await supabase.rpc('request_withdrawal', {
+          p_session_token: sessionToken,
+          p_amount: amount,
+          p_bank_name: form.bank_name,
+          p_bank_account: form.bank_account.trim(),
+          p_bank_holder: form.bank_holder.trim(),
+        })
+        if (error) throw error
+        if (data && !data.success) throw new Error(data.message)
+      } else {
+        await new Promise((r) => setTimeout(r, 1200))
+        // Tambah ke mock withdrawals
+        const newW = {
+          id: 'w' + Date.now(),
+          streamer_id: profile.id,
+          amount,
+          bank_name: form.bank_name,
+          bank_account: form.bank_account.trim(),
+          bank_holder: form.bank_holder.trim(),
+          status: 'pending',
+          notes: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+        setWithdrawals((prev) => [newW, ...prev])
+      }
+      setForm({ amount: '', bank_name: '', bank_account: '', bank_holder: '' })
+      addToast({ message: 'Penarikan berhasil diajukan!' })
+    } catch (err) {
+      addToast({ message: err.message ?? 'Gagal mengajukan penarikan.', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="max-w-2xl">
+      <div className="mb-6">
+        <h1 className="font-display font-bold text-2xl text-zinc-100 mb-1">Penarikan Dana</h1>
+        <p className="text-zinc-500 text-xs">Tarik saldo dari donasi yang kamu terima.</p>
+      </div>
+
+      {/* Saldo Tersedia */}
+      <div className="glass-card p-5 mb-5">
+        <p className={LABEL}>Saldo Tersedia</p>
+        <p className="font-display font-bold text-3xl text-zinc-100 mb-1">{formatRp(availableBalance)}</p>
+        <p className="text-[10px] text-zinc-500">
+          Dari {formatRp(totalReceived)} diterima{pendingWithdrawn > 0 ? ` · ${formatRp(pendingWithdrawn)} dalam proses penarikan` : ''}
+        </p>
+      </div>
+
+      {/* Form Penarikan */}
+      <form onSubmit={handleSubmit} className="glass-card p-5 flex flex-col gap-4 mb-5">
+        <h3 className="font-display font-bold text-sm text-zinc-100">Ajukan Penarikan</h3>
+
+        <div>
+          <label className={LABEL}>Nominal Penarikan</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">Rp</span>
+            <input id="withdraw-amount" type="number" value={form.amount} min={50000} step={1000}
+              onChange={(e) => set('amount', Math.max(0, Number(e.target.value)))}
+              placeholder={`Min. Rp 50.000 · Max. ${formatRp(availableBalance)}`}
+              className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg pl-9 pr-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition-colors" />
+          </div>
+        </div>
+
+        <div>
+          <label className={LABEL}>Nama Bank / E-Wallet</label>
+          <div className="grid grid-cols-4 gap-1.5 mb-2">
+            {BANKS.map((b) => (
+              <button key={b} type="button" onClick={() => set('bank_name', b)}
+                className={`py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+                  form.bank_name === b
+                    ? 'bg-violet-950/60 border border-violet-700/50 text-violet-300'
+                    : 'bg-zinc-900 border border-zinc-800/40 text-zinc-500 hover:text-zinc-300'
+                }`}>
+                {b}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className={LABEL}>Nomor Rekening / No. HP</label>
+          <input id="withdraw-account" type="text" value={form.bank_account} required maxLength={30}
+            onChange={(e) => set('bank_account', e.target.value)}
+            placeholder="Contoh: 1234567890"
+            className={INPUT} />
+        </div>
+
+        <div>
+          <label className={LABEL}>Atas Nama</label>
+          <input id="withdraw-holder" type="text" value={form.bank_holder} required maxLength={50}
+            onChange={(e) => set('bank_holder', e.target.value)}
+            placeholder="Nama pemilik rekening"
+            className={INPUT} />
+        </div>
+
+        <button id="withdraw-submit" type="submit" disabled={saving || availableBalance < 50000}
+          className={`btn-neon w-full py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 mt-1 ${saving || availableBalance < 50000 ? 'opacity-60 cursor-not-allowed' : ''}`}>
+          {saving ? (
+            <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <Wallet size={14} />
+          )}
+          <span>{saving ? 'Mengajukan...' : 'Ajukan Penarikan'}</span>
+        </button>
+
+        {availableBalance < 50000 && (
+          <p className="text-[10px] text-zinc-500 text-center">Saldo minimal Rp 50.000 untuk melakukan penarikan.</p>
+        )}
+      </form>
+
+      {/* Riwayat Penarikan */}
+      <div className="glass-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800/40 bg-zinc-900/10">
+          <h3 className="font-display font-bold text-sm text-zinc-100">
+            Riwayat Penarikan <span className="text-zinc-500 font-normal">({withdrawals.length})</span>
+          </h3>
+        </div>
+
+        {loading ? (
+          <div className="px-5 py-10 text-center">
+            <div className="w-6 h-6 rounded-full border-2 border-violet-500/20 border-t-violet-500 animate-spin mx-auto" />
+          </div>
+        ) : withdrawals.length === 0 ? (
+          <div className="px-5 py-10 text-center text-xs text-zinc-500">
+            Belum ada riwayat penarikan.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[580px]">
+              <thead>
+                <tr className="border-b border-zinc-800/40 bg-zinc-900/20">
+                  {['Tanggal', 'Nominal', 'Bank', 'Rekening', 'Atas Nama', 'Status'].map((h) => (
+                    <th key={h} className="px-5 py-2.5 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-900/30">
+                {withdrawals.map((w) => {
+                  const st = WITHDRAWAL_STATUSES[w.status] || WITHDRAWAL_STATUSES.pending
+                  return (
+                    <tr key={w.id} className="hover:bg-zinc-900/20 transition-colors">
+                      <td className="px-5 py-3 text-[10px] text-zinc-400 whitespace-nowrap">{formatDateShort(w.created_at)}</td>
+                      <td className="px-5 py-3 text-xs text-zinc-100 font-semibold">{formatRp(w.amount)}</td>
+                      <td className="px-5 py-3 text-xs text-zinc-300">{w.bank_name}</td>
+                      <td className="px-5 py-3 text-xs text-zinc-400 font-mono">{w.bank_account}</td>
+                      <td className="px-5 py-3 text-xs text-zinc-400">{w.bank_holder}</td>
+                      <td className="px-5 py-3">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
+                          {st.label}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <Toast toasts={toasts} removeToast={removeToast} />
+    </div>
+  )
+}
+
+
+/* ════════════════════════════════════════════════════════════
    DASHBOARD ROOT
 ════════════════════════════════════════════════════════════ */
 const TABS = [
-  { id: 'stats',    label: 'Statistik',           icon: BarChart3 },
-  { id: 'settings', label: 'Pengaturan Profil',   icon: Settings  },
-  { id: 'overlay',  label: 'Overlay & Uji Coba',  icon: Monitor   },
+  { id: 'stats',      label: 'Statistik',           icon: BarChart3 },
+  { id: 'settings',   label: 'Pengaturan Profil',   icon: Settings  },
+  { id: 'overlay',    label: 'Overlay & Uji Coba',  icon: Monitor   },
+  { id: 'withdrawal', label: 'Penarikan',           icon: Wallet    },
 ]
 
 export default function Dashboard() {
@@ -1497,9 +1733,10 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {tab === 'stats'    && <StatsTab profile={profile} donations={donations} onRefresh={fetchDashboardData} />}
-        {tab === 'settings' && <SettingsTab profile={profile} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} sessionToken={sessionToken} />}
-        {tab === 'overlay'  && <OverlayTab profile={profile} user={user} sessionToken={sessionToken} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} />}
+        {tab === 'stats'      && <StatsTab profile={profile} donations={donations} onRefresh={fetchDashboardData} />}
+        {tab === 'settings'   && <SettingsTab profile={profile} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} sessionToken={sessionToken} />}
+        {tab === 'overlay'    && <OverlayTab profile={profile} user={user} sessionToken={sessionToken} onProfileUpdate={(u) => setProfile((p) => ({ ...p, ...u }))} />}
+        {tab === 'withdrawal' && <WithdrawalTab profile={profile} donations={donations} sessionToken={sessionToken} />}
       </main>
     </div>
   )

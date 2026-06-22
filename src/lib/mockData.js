@@ -106,3 +106,43 @@ export const MOCK_DONATIONS = [
     created_at: new Date(now - 24 * 3_600_000).toISOString(),
   },
 ]
+
+/** Demo withdrawals — dipakai saat Supabase belum dikonfigurasi */
+export const MOCK_WITHDRAWALS = [
+  {
+    id: 'w1',
+    streamer_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    amount: 100000,
+    bank_name: 'BCA',
+    bank_account: '1234567890',
+    bank_holder: 'Coba Zeus',
+    status: 'completed',
+    notes: 'Penarikan berhasil diproses.',
+    created_at: new Date(now - 5 * 86400_000).toISOString(),
+    updated_at: new Date(now - 4 * 86400_000).toISOString(),
+  },
+  {
+    id: 'w2',
+    streamer_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    amount: 50000,
+    bank_name: 'DANA',
+    bank_account: '081234567890',
+    bank_holder: 'Coba Zeus',
+    status: 'pending',
+    notes: null,
+    created_at: new Date(now - 1 * 86400_000).toISOString(),
+    updated_at: new Date(now - 1 * 86400_000).toISOString(),
+  },
+  {
+    id: 'w3',
+    streamer_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+    amount: 75000,
+    bank_name: 'Mandiri',
+    bank_account: '9876543210',
+    bank_holder: 'Coba Zeus',
+    status: 'rejected',
+    notes: 'Data rekening tidak valid.',
+    created_at: new Date(now - 10 * 86400_000).toISOString(),
+    updated_at: new Date(now - 9 * 86400_000).toISOString(),
+  },
+]
